@@ -15,4 +15,12 @@ public class Customer extends Person {
     }
 
     // getters & setters
+
+    public List<String> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<String> addresses) {
+        this.addresses = addresses;
+    }
 }
