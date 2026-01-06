@@ -1,0 +1,326 @@
+package gr.hua.dit.Street_Food_Go.controller.web;
+
+import gr.hua.dit.Street_Food_Go.model.*;
+import gr.hua.dit.Street_Food_Go.security.CustomUserDetails;
+import gr.hua.dit.Street_Food_Go.service.MenuItemService;
+import gr.hua.dit.Street_Food_Go.service.OrderService;
+import gr.hua.dit.Street_Food_Go.service.RestaurantService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Controller
+@RequestMapping("/owner")
+public class OwnerWebController {
+
+    private final RestaurantService restaurantService;
+    private final MenuItemService menuItemService;
+    private final OrderService orderService;
+
+    public OwnerWebController(final RestaurantService restaurantService,
+                               final MenuItemService menuItemService,
+                               final OrderService orderService) {
+        if (restaurantService == null) {
+            throw new NullPointerException("restaurantService cannot be null");
+        }
+        if (menuItemService == null) {
+            throw new NullPointerException("menuItemService cannot be null");
+        }
+        if (orderService == null) {
+            throw new NullPointerException("orderService cannot be null");
+        }
+        this.restaurantService = restaurantService;
+        this.menuItemService = menuItemService;
+        this.orderService = orderService;
+    }
+
+    @GetMapping("/dashboard")
+    public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        List<Restaurant> restaurants = restaurantService.getRestaurantsByOwnerId(userDetails.getId());
+        model.addAttribute("restaurantsCount", restaurants.size());
+
+        // Count pending and active orders across all restaurants
+        long pendingCount = 0;
+        long activeCount = 0;
+        for (Restaurant restaurant : restaurants) {
+            List<Order> orders = orderService.getOrdersByRestaurantId(restaurant.getId());
+            pendingCount += orders.stream().filter(o -> o.getStatus() == OrderStatus.PENDING).count();
+            activeCount += orders.stream().filter(o ->
+                    o.getStatus() == OrderStatus.ACCEPTED ||
+                    o.getStatus() == OrderStatus.PREPARING ||
+                    o.getStatus() == OrderStatus.READY_FOR_PICKUP ||
+                    o.getStatus() == OrderStatus.OUT_FOR_DELIVERY
+            ).count();
+        }
+        model.addAttribute("pendingOrdersCount", pendingCount);
+        model.addAttribute("activeOrdersCount", activeCount);
+
+        return "owner/dashboard";
+    }
+
+    // ========== Restaurants ==========
+
+    @GetMapping("/restaurants")
+    public String restaurants(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        List<Restaurant> restaurants = restaurantService.getRestaurantsByOwnerId(userDetails.getId());
+        model.addAttribute("restaurants", restaurants);
+        return "owner/restaurants";
+    }
+
+    @GetMapping("/restaurants/new")
+    public String newRestaurantForm(Model model) {
+        model.addAttribute("restaurant", null);
+        return "owner/restaurant-form";
+    }
+
+    @PostMapping("/restaurants")
+    public String createRestaurant(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                    @RequestParam String name,
+                                    @RequestParam String cuisineType,
+                                    @RequestParam String address,
+                                    @RequestParam(required = false) Double latitude,
+                                    @RequestParam(required = false) Double longitude,
+                                    @RequestParam(required = false) BigDecimal minimumOrderValue,
+                                    @RequestParam(required = false) Boolean open,
+                                    RedirectAttributes redirectAttributes) {
+        Restaurant restaurant = new Restaurant();
+        restaurant.setName(name);
+        restaurant.setCuisineType(cuisineType);
+        restaurant.setAddress(address);
+        restaurant.setLatitude(latitude);
+        restaurant.setLongitude(longitude);
+        restaurant.setMinimumOrderValue(minimumOrderValue);
+        restaurant.setOpen(open != null && open);
+
+        restaurantService.createRestaurant(userDetails.getId(), restaurant);
+        redirectAttributes.addFlashAttribute("success", "Το κατάστημα δημιουργήθηκε");
+        return "redirect:/owner/restaurants";
+    }
+
+    @GetMapping("/restaurants/{id}/edit")
+    public String editRestaurantForm(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                      @PathVariable Long id, Model model) {
+        return restaurantService.getRestaurantById(id)
+                .filter(r -> r.getOwner().getId().equals(userDetails.getId()))
+                .map(restaurant -> {
+                    model.addAttribute("restaurant", restaurant);
+                    return "owner/restaurant-form";
+                })
+                .orElse("redirect:/owner/restaurants");
+    }
+
+    @PostMapping("/restaurants/{id}")
+    public String updateRestaurant(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                    @PathVariable Long id,
+                                    @RequestParam String name,
+                                    @RequestParam String cuisineType,
+                                    @RequestParam String address,
+                                    @RequestParam(required = false) Double latitude,
+                                    @RequestParam(required = false) Double longitude,
+                                    @RequestParam(required = false) BigDecimal minimumOrderValue,
+                                    @RequestParam(required = false) Boolean open,
+                                    RedirectAttributes redirectAttributes) {
+        return restaurantService.getRestaurantById(id)
+                .filter(r -> r.getOwner().getId().equals(userDetails.getId()))
+                .map(existing -> {
+                    existing.setName(name);
+                    existing.setCuisineType(cuisineType);
+                    existing.setAddress(address);
+                    existing.setLatitude(latitude);
+                    existing.setLongitude(longitude);
+                    existing.setMinimumOrderValue(minimumOrderValue);
+                    existing.setOpen(open != null && open);
+                    restaurantService.updateRestaurant(id, existing);
+                    redirectAttributes.addFlashAttribute("success", "Το κατάστημα ενημερώθηκε");
+                    return "redirect:/owner/restaurants";
+                })
+                .orElse("redirect:/owner/restaurants");
+    }
+
+    @PostMapping("/restaurants/{id}/toggle")
+    public String toggleRestaurant(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                    @PathVariable Long id, RedirectAttributes redirectAttributes) {
+        return restaurantService.getRestaurantById(id)
+                .filter(r -> r.getOwner().getId().equals(userDetails.getId()))
+                .map(restaurant -> {
+                    if (restaurant.isOpen()) {
+                        restaurantService.closeRestaurant(id);
+                        redirectAttributes.addFlashAttribute("success", "Το κατάστημα έκλεισε");
+                    } else {
+                        restaurantService.openRestaurant(id);
+                        redirectAttributes.addFlashAttribute("success", "Το κατάστημα άνοιξε");
+                    }
+                    return "redirect:/owner/restaurants";
+                })
+                .orElse("redirect:/owner/restaurants");
+    }
+
+    // ========== Menu ==========
+
+    @GetMapping("/restaurants/{id}/menu")
+    public String menu(@AuthenticationPrincipal CustomUserDetails userDetails,
+                        @PathVariable Long id, Model model) {
+        return restaurantService.getRestaurantById(id)
+                .filter(r -> r.getOwner().getId().equals(userDetails.getId()))
+                .map(restaurant -> {
+                    model.addAttribute("restaurant", restaurant);
+                    model.addAttribute("menuItems", menuItemService.getMenuItemsByRestaurantId(id));
+                    return "owner/menu";
+                })
+                .orElse("redirect:/owner/restaurants");
+    }
+
+    @PostMapping("/restaurants/{restaurantId}/menu")
+    public String addMenuItem(@AuthenticationPrincipal CustomUserDetails userDetails,
+                               @PathVariable Long restaurantId,
+                               @RequestParam String name,
+                               @RequestParam(required = false) String description,
+                               @RequestParam BigDecimal price,
+                               @RequestParam(required = false) Boolean available,
+                               RedirectAttributes redirectAttributes) {
+        return restaurantService.getRestaurantById(restaurantId)
+                .filter(r -> r.getOwner().getId().equals(userDetails.getId()))
+                .map(restaurant -> {
+                    MenuItem item = new MenuItem();
+                    item.setName(name);
+                    item.setDescription(description);
+                    item.setPrice(price);
+                    item.setAvailable(available != null && available);
+                    menuItemService.createMenuItem(restaurantId, item);
+                    redirectAttributes.addFlashAttribute("success", "Το προϊόν προστέθηκε");
+                    return "redirect:/owner/restaurants/" + restaurantId + "/menu";
+                })
+                .orElse("redirect:/owner/restaurants");
+    }
+
+    @PostMapping("/restaurants/{restaurantId}/menu/{itemId}/toggle")
+    public String toggleMenuItem(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                  @PathVariable Long restaurantId,
+                                  @PathVariable Long itemId,
+                                  RedirectAttributes redirectAttributes) {
+        return restaurantService.getRestaurantById(restaurantId)
+                .filter(r -> r.getOwner().getId().equals(userDetails.getId()))
+                .flatMap(restaurant -> menuItemService.getMenuItemById(itemId))
+                .map(item -> {
+                    menuItemService.setAvailable(itemId, !item.isAvailable());
+                    redirectAttributes.addFlashAttribute("success",
+                            item.isAvailable() ? "Το προϊόν απενεργοποιήθηκε" : "Το προϊόν ενεργοποιήθηκε");
+                    return "redirect:/owner/restaurants/" + restaurantId + "/menu";
+                })
+                .orElse("redirect:/owner/restaurants");
+    }
+
+    @PostMapping("/restaurants/{restaurantId}/menu/{itemId}/delete")
+    public String deleteMenuItem(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                  @PathVariable Long restaurantId,
+                                  @PathVariable Long itemId,
+                                  RedirectAttributes redirectAttributes) {
+        return restaurantService.getRestaurantById(restaurantId)
+                .filter(r -> r.getOwner().getId().equals(userDetails.getId()))
+                .map(restaurant -> {
+                    menuItemService.deleteMenuItem(itemId);
+                    redirectAttributes.addFlashAttribute("success", "Το προϊόν διαγράφηκε");
+                    return "redirect:/owner/restaurants/" + restaurantId + "/menu";
+                })
+                .orElse("redirect:/owner/restaurants");
+    }
+
+    // ========== Orders ==========
+
+    @GetMapping("/orders")
+    public String orders(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        List<Restaurant> restaurants = restaurantService.getRestaurantsByOwnerId(userDetails.getId());
+
+        List<Order> pendingOrders = new ArrayList<>();
+        List<Order> activeOrders = new ArrayList<>();
+
+        for (Restaurant restaurant : restaurants) {
+            List<Order> restaurantOrders = orderService.getOrdersByRestaurantId(restaurant.getId());
+            pendingOrders.addAll(restaurantOrders.stream()
+                    .filter(o -> o.getStatus() == OrderStatus.PENDING)
+                    .collect(Collectors.toList()));
+            activeOrders.addAll(restaurantOrders.stream()
+                    .filter(o -> o.getStatus() == OrderStatus.ACCEPTED ||
+                                 o.getStatus() == OrderStatus.PREPARING ||
+                                 o.getStatus() == OrderStatus.READY_FOR_PICKUP ||
+                                 o.getStatus() == OrderStatus.OUT_FOR_DELIVERY)
+                    .collect(Collectors.toList()));
+        }
+
+        model.addAttribute("pendingOrders", pendingOrders);
+        model.addAttribute("activeOrders", activeOrders);
+        return "owner/orders";
+    }
+
+    @GetMapping("/orders/{id}")
+    public String orderDetail(@AuthenticationPrincipal CustomUserDetails userDetails,
+                               @PathVariable Long id, Model model) {
+        return orderService.getOrderById(id)
+                .filter(order -> order.getRestaurant().getOwner().getId().equals(userDetails.getId()))
+                .map(order -> {
+                    model.addAttribute("order", order);
+                    return "owner/order-detail";
+                })
+                .orElse("redirect:/owner/orders");
+    }
+
+    @PostMapping("/orders/{id}/accept")
+    public String acceptOrder(@AuthenticationPrincipal CustomUserDetails userDetails,
+                               @PathVariable Long id, RedirectAttributes redirectAttributes) {
+        return orderService.getOrderById(id)
+                .filter(order -> order.getRestaurant().getOwner().getId().equals(userDetails.getId()))
+                .filter(order -> order.getStatus() == OrderStatus.PENDING)
+                .map(order -> {
+                    orderService.updateOrderStatus(id, OrderStatus.ACCEPTED);
+                    redirectAttributes.addFlashAttribute("success", "Η παραγγελία αποδέχτηκε");
+                    return "redirect:/owner/orders";
+                })
+                .orElseGet(() -> {
+                    redirectAttributes.addFlashAttribute("error", "Δεν μπορεί να γίνει αποδοχή");
+                    return "redirect:/owner/orders";
+                });
+    }
+
+    @PostMapping("/orders/{id}/reject")
+    public String rejectOrder(@AuthenticationPrincipal CustomUserDetails userDetails,
+                               @PathVariable Long id, RedirectAttributes redirectAttributes) {
+        return orderService.getOrderById(id)
+                .filter(order -> order.getRestaurant().getOwner().getId().equals(userDetails.getId()))
+                .filter(order -> order.getStatus() == OrderStatus.PENDING)
+                .map(order -> {
+                    orderService.updateOrderStatus(id, OrderStatus.REJECTED);
+                    redirectAttributes.addFlashAttribute("success", "Η παραγγελία απορρίφθηκε");
+                    return "redirect:/owner/orders";
+                })
+                .orElseGet(() -> {
+                    redirectAttributes.addFlashAttribute("error", "Δεν μπορεί να γίνει απόρριψη");
+                    return "redirect:/owner/orders";
+                });
+    }
+
+    @PostMapping("/orders/{id}/status")
+    public String updateOrderStatus(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                     @PathVariable Long id,
+                                     @RequestParam String status,
+                                     RedirectAttributes redirectAttributes) {
+        return orderService.getOrderById(id)
+                .filter(order -> order.getRestaurant().getOwner().getId().equals(userDetails.getId()))
+                .map(order -> {
+                    OrderStatus newStatus = OrderStatus.valueOf(status);
+                    orderService.updateOrderStatus(id, newStatus);
+                    redirectAttributes.addFlashAttribute("success", "Η κατάσταση ενημερώθηκε");
+                    return "redirect:/owner/orders";
+                })
+                .orElseGet(() -> {
+                    redirectAttributes.addFlashAttribute("error", "Σφάλμα ενημέρωσης");
+                    return "redirect:/owner/orders";
+                });
+    }
+}
