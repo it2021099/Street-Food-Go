@@ -188,9 +188,9 @@ src/main/
 
 ## Authors
 
-- Student ID: 2021081
-- Student ID: 2021099
-- Student ID: 21984
+- Grigorios Pavlou: 2021081
+- Theodoros Triantafillou: 2021099
+- Prountzos Konstantinos: 21984
 
 ## License
 
