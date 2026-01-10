@@ -62,9 +62,21 @@ public class WebController {
         return "index";
     }
 
+    // ==================== LOGIN ENDPOINTS ====================
+
     @GetMapping("/login")
-    public String login() {
-        return "login";
+    public String loginClassChoice() {
+        return "ClassChoice_LoginPressed";
+    }
+
+    @GetMapping("/login/customer")
+    public String loginCustomer() {
+        return "Regular_Login";
+    }
+
+    @GetMapping("/login/restaurant")
+    public String loginRestaurant() {
+        return "Restaurant_Login";
     }
 
     @GetMapping("/login-success")
@@ -77,38 +89,77 @@ public class WebController {
         return "redirect:/";
     }
 
+    // ==================== REGISTER ENDPOINTS ====================
+
     @GetMapping("/register")
-    public String registerForm() {
-        return "register";
+    public String registerClassChoice() {
+        return "ClassChoice_RegisterPressed";
     }
 
-    @PostMapping("/register")
-    public String register(@RequestParam String username,
-                           @RequestParam String email,
-                           @RequestParam String password,
-                           @RequestParam String role,
-                           RedirectAttributes redirectAttributes) {
+    @GetMapping("/register/customer")
+    public String registerCustomerForm() {
+        return "Regular_Register";
+    }
+
+    @GetMapping("/register/restaurant")
+    public String registerRestaurantForm() {
+        return "Restaurant_Register";
+    }
+
+    @PostMapping("/register/customer")
+    public String registerCustomer(@RequestParam String username,
+                                   @RequestParam String email,
+                                   @RequestParam String password,
+                                   @RequestParam(required = false) String address,
+                                   RedirectAttributes redirectAttributes) {
         if (userService.existsByUsername(username)) {
-            redirectAttributes.addFlashAttribute("error", "Το όνομα χρήστη υπάρχει ήδη");
-            return "redirect:/register";
+            redirectAttributes.addFlashAttribute("error", "Username already exists");
+            return "redirect:/register/customer";
         }
 
         if (userService.existsByEmail(email)) {
-            redirectAttributes.addFlashAttribute("error", "Το email υπάρχει ήδη");
-            return "redirect:/register";
+            redirectAttributes.addFlashAttribute("error", "Email already exists");
+            return "redirect:/register/customer";
         }
 
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole(Role.valueOf(role));
+        user.setRole(Role.CUSTOMER);
         user.setEnabled(true);
 
         userService.createUser(user);
 
-        redirectAttributes.addFlashAttribute("success", "Η εγγραφή ολοκληρώθηκε! Μπορείς να συνδεθείς.");
-        return "redirect:/login";
+        return "redirect:/login/customer?success=true";
+    }
+
+    @PostMapping("/register/restaurant")
+    public String registerRestaurant(@RequestParam String username,
+                                     @RequestParam String email,
+                                     @RequestParam String password,
+                                     @RequestParam(required = false) String address,
+                                     RedirectAttributes redirectAttributes) {
+        if (userService.existsByUsername(username)) {
+            redirectAttributes.addFlashAttribute("error", "Username already exists");
+            return "redirect:/register/restaurant";
+        }
+
+        if (userService.existsByEmail(email)) {
+            redirectAttributes.addFlashAttribute("error", "Email already exists");
+            return "redirect:/register/restaurant";
+        }
+
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(Role.RESTAURANT_OWNER);
+        user.setEnabled(true);
+
+        userService.createUser(user);
+
+        return "redirect:/login/restaurant?success=true";
     }
 
     @GetMapping("/restaurant/{id}")

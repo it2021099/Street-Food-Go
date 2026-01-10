@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle != null} ? ${pageTitle} + ' - StreetFoodGo' : 'StreetFoodGo'">StreetFoodGo</title>
+
+    <!-- Google Fonts - Fredoka One (similar to AC Soft Icecream) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #3ecbcf 0%, #8ed6a8 50%, #e8de7a 100%);
+            background-attachment: fixed;
+        }
+
+        /* Header */
+        .header {
+            background-color: #1a8a8f;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .burger-icon {
+            font-size: 32px;
+        }
+
+        .welcome-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 36px;
+            color: #f4d03f;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .logo-suffix {
+            font-family: 'Fredoka One', cursive;
+            font-size: 24px;
+            color: #ff6b9d;
+            margin-left: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+
+        /* Main content */
+        .main-content {
+            padding-top: 70px;
+            min-height: 100vh;
+        }
+
+        /* Form card styles */
+        .form-card {
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 25px;
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            outline: none;
+            transition: box-shadow 0.3s;
+        }
+
+        .form-input::placeholder {
+            color: #999;
+        }
+
+        .form-input:focus {
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.5);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 25px;
+            background-color: #00c4cc;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 15px;
+        }
+
+        .btn-primary:hover {
+            background-color: #00b0b8;
+            transform: translateY(-2px);
+        }
+
+        /* Class choice cards */
+        .class-card {
+            background: rgba(180, 160, 200, 0.7);
+            border-radius: 20px;
+            padding: 40px 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .class-card-icon {
+            font-size: 80px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .class-card-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 18px;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Search bar */
+        .search-bar {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.95);
+            color: #333;
+            outline: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .search-bar::placeholder {
+            color: #999;
+        }
+
+        /* Action text */
+        .action-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: 24px;
+            color: #ff6b9d;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        /* Section title */
+        .section-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 36px;
+            color: #f4d03f;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+
+        /* Alert messages */
+        .alert {
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background-color: rgba(220, 53, 69, 0.9);
+            color: white;
+        }
+
+        .alert-success {
+            background-color: rgba(40, 167, 69, 0.9);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Fragment -->
+    <header class="header" th:fragment="header(welcomeText, showNav, logoSuffix)">
+        <div class="header-left">
+            <span class="burger-icon">🍔</span>
+            <span class="welcome-text" th:text="${welcomeText}">Welcome</span>
+        </div>
+        <div class="header-center">
+            <a href="/" class="logo">StreetFoodGo<span class="logo-suffix" th:if="${logoSuffix}" th:text="${logoSuffix}"></span></a>
+        </div>
+        <div class="header-right" th:if="${showNav}">
+            <a href="/register" class="nav-link">Register</a>
+            <a href="/login" class="nav-link">Log in</a>
+        </div>
+    </header>
+
+    <!-- Full Page Layout Fragment -->
+    <th:block th:fragment="layout(content)">
+        <div class="main-content">
+            <th:block th:replace="${content}"/>
+        </div>
+    </th:block>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${restaurant.name} + ' - StreetFoodGo'">Restaurant - StreetFoodGo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #3ecbcf 0%, #8ed6a8 50%, #e8de7a 100%);
+            background-attachment: fixed;
+        }
+
+        .header {
+            background-color: #1a8a8f;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .burger-icon {
+            font-size: 32px;
+        }
+
+        .welcome-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 36px;
+            color: #f4d03f;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+
+        .main-content {
+            padding-top: 70px;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-hint {
+            font-family: 'Fredoka One', cursive;
+            font-size: 22px;
+            color: #ff6b9d;
+            text-align: center;
+            padding: 15px 0;
+        }
+
+        .restaurant-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 10px 20px;
+        }
+
+        .restaurant-info-card {
+            background: linear-gradient(180deg, #a8b5d6 0%, #b8c5e0 100%);
+            border-radius: 15px;
+            padding: 30px 35px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .restaurant-cuisine {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .restaurant-description {
+            color: white;
+            font-size: 16px;
+            line-height: 1.5;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .menu-items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-item-card {
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 15px;
+            padding: 25px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+        }
+
+        .menu-item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .menu-item-info {
+            flex: 1;
+        }
+
+        .menu-item-name {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .menu-item-description {
+            color: white;
+            font-size: 14px;
+            opacity: 0.9;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .menu-item-price {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            margin-left: 20px;
+        }
+
+        .no-menu-items {
+            text-align: center;
+            color: white;
+            font-size: 16px;
+            padding: 40px;
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 15px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <span class="burger-icon">🍔</span>
+            <span class="welcome-text">Welcome to <span th:text="${restaurant.name}">{Restaurant.name}</span></span>
+        </div>
+        <div class="header-center">
+            <a href="/" class="logo">StreetFoodGo</a>
+        </div>
+        <div class="header-right">
+            <a href="/register" class="nav-link">Register</a>
+            <a href="/login" class="nav-link">Log in</a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Login hint for guests -->
+        <p class="login-hint">Log in to order</p>
+
+        <div class="restaurant-content">
+            <!-- Restaurant Info Card -->
+            <div class="restaurant-info-card">
+                <p class="restaurant-cuisine">
+                    <span th:text="${restaurant.cuisineType}">{cuisineType}</span> cuisine
+                </p>
+                <p class="restaurant-description" th:text="${restaurant.description}">
+                    Restaurant description goes here...
+                </p>
+            </div>
+
+            <!-- Menu Items -->
+            <div class="menu-items-container">
+                <a th:each="item : ${menuItems}"
+                   th:href="@{/login}"
+                   class="menu-item-card">
+                    <div class="menu-item-info">
+                        <div class="menu-item-name" th:text="${item.name}">MenuItem.name</div>
+                        <div class="menu-item-description" th:text="${item.description}">MenuItem.description</div>
+                    </div>
+                    <div class="menu-item-price">
+                        <span th:text="${#numbers.formatDecimal(item.price, 1, 2)} + '€'">0.00€</span>
+                    </div>
+                </a>
+
+                <!-- No menu items message -->
+                <div class="no-menu-items" th:if="${menuItems == null or menuItems.isEmpty()}">
+                    No menu items available yet.
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

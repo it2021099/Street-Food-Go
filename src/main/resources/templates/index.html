@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreetFoodGo - Home</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #3ecbcf 0%, #8ed6a8 50%, #e8de7a 100%);
+            background-attachment: fixed;
+        }
+
+        .header {
+            background-color: #1a8a8f;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .burger-icon {
+            font-size: 32px;
+        }
+
+        .welcome-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 36px;
+            color: #f4d03f;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+
+        .main-content {
+            padding-top: 70px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 0 20px;
+        }
+
+        .search-form {
+            display: flex;
+            justify-content: center;
+        }
+
+        .search-bar {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.95);
+            color: #333;
+            outline: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: box-shadow 0.3s;
+        }
+
+        .search-bar::placeholder {
+            color: #999;
+        }
+
+        .search-bar:focus {
+            box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+        }
+
+        /* Restaurant cards for search results */
+        .restaurants-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .restaurant-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .restaurant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .restaurant-name {
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            color: #1a8a8f;
+            margin-bottom: 8px;
+        }
+
+        .restaurant-cuisine {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .restaurant-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-open {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-closed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <span class="burger-icon">🍔</span>
+            <span class="welcome-text">Welcome</span>
+        </div>
+        <div class="header-center">
+            <a href="/" class="logo">StreetFoodGo</a>
+        </div>
+        <div class="header-right">
+            <a href="/register" class="nav-link">Register</a>
+            <a href="/login" class="nav-link">Log in</a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="search-container">
+            <form class="search-form" action="/" method="get">
+                <input type="text"
+                       name="search"
+                       class="search-bar"
+                       placeholder="Search a Cooking Spot"
+                       th:value="${searchQuery}">
+            </form>
+        </div>
+
+        <!-- Display restaurant results if there's a search or show all restaurants -->
+        <div class="restaurants-grid" th:if="${restaurants != null and !restaurants.isEmpty()}">
+            <a th:each="restaurant : ${restaurants}"
+               th:href="@{/restaurant/{id}(id=${restaurant.id})}"
+               class="restaurant-card">
+                <div class="restaurant-name" th:text="${restaurant.name}">Restaurant Name</div>
+                <div class="restaurant-cuisine" th:text="${restaurant.cuisineType}">Cuisine Type</div>
+                <span class="restaurant-status"
+                      th:classappend="${restaurant.open} ? 'status-open' : 'status-closed'"
+                      th:text="${restaurant.open} ? 'Open' : 'Closed'">Open</span>
+            </a>
+        </div>
+
+        <div class="no-results" th:if="${restaurants != null and restaurants.isEmpty() and searchQuery != null}">
+            <p>No restaurants found for "<span th:text="${searchQuery}"></span>"</p>
+        </div>
+    </main>
+</body>
+</html>

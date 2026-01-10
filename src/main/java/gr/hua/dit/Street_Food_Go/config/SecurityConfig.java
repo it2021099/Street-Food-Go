@@ -85,7 +85,7 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests(auth -> auth
                         // Public web pages
-                        .requestMatchers("/", "/login", "/register", "/restaurant/**").permitAll()
+                        .requestMatchers("/", "/login", "/login/**", "/register", "/register/**", "/restaurant/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
@@ -98,10 +98,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/login")
+                        .loginPage("/login/customer")
                         .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/login-success", true)
-                        .failureUrl("/login?error=true")
+                        .failureUrl("/login/customer?error=true")
                         .permitAll()
                 )
                 .logout(logout -> logout
