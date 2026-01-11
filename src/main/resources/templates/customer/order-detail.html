@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - StreetFoodGo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #3ecbcf 0%, #8ed6a8 50%, #e8de7a 100%);
+            background-attachment: fixed;
+        }
+
+        .header {
+            background-color: #1a8a8f;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .burger-icon {
+            font-size: 32px;
+        }
+
+        .welcome-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .username {
+            color: #ff6b9d;
+            font-weight: 600;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 36px;
+            color: #f4d03f;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+
+        .main-content {
+            padding-top: 90px;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .order-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* ETA Card - Prominent at top */
+        .eta-card {
+            background: linear-gradient(135deg, #ff6b9d 0%, #ff8a65 100%);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.3);
+        }
+
+        .eta-label {
+            color: white;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .eta-time {
+            font-family: 'Fredoka One', cursive;
+            font-size: 48px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .eta-date {
+            color: white;
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .eta-pending {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .eta-completed {
+            font-family: 'Fredoka One', cursive;
+            font-size: 28px;
+            color: white;
+        }
+
+        /* Order Status Card */
+        .status-card {
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .order-number {
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .order-status {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background-color: #f39c12; color: white; }
+        .status-accepted { background-color: #3498db; color: white; }
+        .status-preparing { background-color: #9b59b6; color: white; }
+        .status-ready { background-color: #00c4cc; color: white; }
+        .status-out { background-color: #2ecc71; color: white; }
+        .status-delivered, .status-completed { background-color: #27ae60; color: white; }
+        .status-cancelled, .status-rejected { background-color: #e74c3c; color: white; }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            right: 30px;
+            height: 4px;
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 2px;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+
+        .step-icon.completed {
+            background-color: #2ecc71;
+        }
+
+        .step-icon.current {
+            background-color: #ff6b9d;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .step-label {
+            color: white;
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            max-width: 60px;
+        }
+
+        /* Restaurant & Items */
+        .restaurant-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .restaurant-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #ff6b9d;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .restaurant-name {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .restaurant-type {
+            color: white;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Order Items */
+        .items-section {
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-details {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .item-quantity {
+            background-color: #ff6b9d;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .item-name {
+            color: white;
+            font-weight: 500;
+        }
+
+        .item-price {
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Total */
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            margin-top: 10px;
+            border-top: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .total-label {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .total-amount {
+            font-family: 'Fredoka One', cursive;
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s, opacity 0.3s;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-back {
+            background-color: #00c4cc;
+            color: white;
+        }
+
+        .btn-cancel {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .alert-success {
+            background-color: rgba(40, 167, 69, 0.9);
+            color: white;
+        }
+
+        .alert-error {
+            background-color: rgba(220, 53, 69, 0.9);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <span class="burger-icon">🍔</span>
+            <span class="welcome-text">Welcome <span class="username" th:text="${#authentication.name}">UserName</span></span>
+        </div>
+        <div class="header-center">
+            <a href="/customer/dashboard" class="logo">StreetFoodGo</a>
+        </div>
+        <div class="header-right">
+            <a href="/customer/orders" class="nav-link">My Orders</a>
+            <a href="/logout" class="nav-link">Log out</a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Alert messages -->
+        <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+
+        <div class="order-container">
+            <!-- ETA Card - Prominent Display -->
+            <div class="eta-card">
+                <div th:if="${order.status.name() == 'DELIVERED' or order.status.name() == 'COMPLETED'}">
+                    <div class="eta-label">Order Complete</div>
+                    <div class="eta-completed">
+                        <i class="fa-solid fa-circle-check"></i> Delivered
+                    </div>
+                </div>
+                <div th:if="${order.status.name() == 'CANCELLED' or order.status.name() == 'REJECTED'}">
+                    <div class="eta-label">Order Status</div>
+                    <div class="eta-completed">
+                        <i class="fa-solid fa-circle-xmark"></i> Cancelled
+                    </div>
+                </div>
+                <div th:if="${order.status.name() != 'DELIVERED' and order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED' and order.status.name() != 'REJECTED'}">
+                    <div class="eta-label">Estimated Arrival Time</div>
+                    <div th:if="${order.estimatedDeliveryTime != null}">
+                        <div class="eta-time" th:text="${#temporals.format(order.estimatedDeliveryTime, 'HH:mm')}">12:30</div>
+                        <div class="eta-date" th:text="${#temporals.format(order.estimatedDeliveryTime, 'EEEE, d MMMM')}">Monday, 15 January</div>
+                    </div>
+                    <div th:if="${order.estimatedDeliveryTime == null}">
+                        <div class="eta-pending">
+                            <i class="fa-solid fa-clock"></i> Calculating...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Card -->
+            <div class="status-card">
+                <div class="status-header">
+                    <span class="order-number">Order #<span th:text="${order.id}">123</span></span>
+                    <span class="order-status"
+                          th:classappend="${order.status.name() == 'PENDING'} ? 'status-pending' :
+                                          (${order.status.name() == 'ACCEPTED'} ? 'status-accepted' :
+                                          (${order.status.name() == 'PREPARING'} ? 'status-preparing' :
+                                          (${order.status.name() == 'READY_FOR_PICKUP'} ? 'status-ready' :
+                                          (${order.status.name() == 'OUT_FOR_DELIVERY'} ? 'status-out' :
+                                          (${order.status.name() == 'DELIVERED' or order.status.name() == 'COMPLETED'} ? 'status-delivered' :
+                                          'status-cancelled')))))"
+                          th:text="${order.status.name().replace('_', ' ')}">PENDING</span>
+                </div>
+
+                <!-- Progress Steps -->
+                <div class="progress-steps" th:if="${order.status.name() != 'CANCELLED' and order.status.name() != 'REJECTED'}">
+                    <div class="progress-step">
+                        <div class="step-icon completed">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <span class="step-label">Placed</span>
+                    </div>
+                    <div class="progress-step">
+                        <div class="step-icon"
+                             th:classappend="${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).ACCEPTED.ordinal()} ? 'completed' :
+                                             (${order.status.name() == 'PENDING'} ? 'current' : '')">
+                            <i class="fa-solid" th:classappend="${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).ACCEPTED.ordinal()} ? 'fa-check' : 'fa-hourglass'"></i>
+                        </div>
+                        <span class="step-label">Confirmed</span>
+                    </div>
+                    <div class="progress-step">
+                        <div class="step-icon"
+                             th:classappend="${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).PREPARING.ordinal()} ? 'completed' :
+                                             (${order.status.name() == 'ACCEPTED'} ? 'current' : '')">
+                            <i class="fa-solid" th:classappend="${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).PREPARING.ordinal()} ? 'fa-check' : 'fa-fire-burner'"></i>
+                        </div>
+                        <span class="step-label">Preparing</span>
+                    </div>
+                    <div class="progress-step" th:if="${order.orderType.name() == 'DELIVERY'}">
+                        <div class="step-icon"
+                             th:classappend="${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).OUT_FOR_DELIVERY.ordinal()} ? 'completed' :
+                                             (${order.status.name() == 'READY_FOR_PICKUP'} ? 'current' : '')">
+                            <i class="fa-solid" th:classappend="${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).OUT_FOR_DELIVERY.ordinal()} ? 'fa-check' : 'fa-motorcycle'"></i>
+                        </div>
+                        <span class="step-label">On the way</span>
+                    </div>
+                    <div class="progress-step">
+                        <div class="step-icon"
+                             th:classappend="${order.status.name() == 'DELIVERED' or order.status.name() == 'COMPLETED'} ? 'completed' :
+                                             (${(order.orderType.name() == 'DELIVERY' and order.status.name() == 'OUT_FOR_DELIVERY') or (order.orderType.name() != 'DELIVERY' and order.status.name() == 'READY_FOR_PICKUP')} ? 'current' : '')">
+                            <i class="fa-solid fa-flag-checkered"></i>
+                        </div>
+                        <span class="step-label" th:text="${order.orderType.name() == 'DELIVERY'} ? 'Delivered' : 'Ready'">Delivered</span>
+                    </div>
+                </div>
+
+                <!-- Restaurant Info -->
+                <div class="restaurant-info">
+                    <div class="restaurant-icon">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <div>
+                        <div class="restaurant-name" th:text="${order.restaurant.name}">Restaurant Name</div>
+                        <div class="restaurant-type">
+                            <i class="fa-solid fa-truck" th:if="${order.orderType.name() == 'DELIVERY'}"></i>
+                            <i class="fa-solid fa-bag-shopping" th:if="${order.orderType.name() != 'DELIVERY'}"></i>
+                            <span th:text="${order.orderType.name() == 'DELIVERY'} ? 'Delivery' : 'Pickup'">Delivery</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="items-section">
+                <h2 class="section-title">Order Items</h2>
+                <div th:each="item : ${order.orderItems}" class="order-item">
+                    <div class="item-details">
+                        <span class="item-quantity" th:text="${item.quantity}">1</span>
+                        <span class="item-name" th:text="${item.menuItem.name}">Item Name</span>
+                    </div>
+                    <span class="item-price" th:text="${#numbers.formatDecimal(item.price, 1, 2)} + '€'">0.00€</span>
+                </div>
+                <div class="total-row">
+                    <span class="total-label">Total</span>
+                    <span class="total-amount" th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)} + '€'">0.00€</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+                <a href="/customer/orders" class="action-btn btn-back">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Orders
+                </a>
+                <form th:if="${order.status.name() == 'PENDING'}"
+                      th:action="@{/customer/orders/{id}/cancel(id=${order.id})}" method="post" style="display:inline;">
+                    <button type="submit" class="action-btn btn-cancel">
+                        <i class="fa-solid fa-xmark"></i> Cancel Order
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

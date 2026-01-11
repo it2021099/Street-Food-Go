@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
@@ -44,25 +46,112 @@ public class OwnerWebController {
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         List<Restaurant> restaurants = restaurantService.getRestaurantsByOwnerId(userDetails.getId());
+
+        // If owner has no restaurant, redirect to create one
+        if (restaurants.isEmpty()) {
+            return "redirect:/owner/restaurants/new";
+        }
+
         model.addAttribute("restaurantsCount", restaurants.size());
 
-        // Count pending and active orders across all restaurants
-        long pendingCount = 0;
-        long activeCount = 0;
+        // Get pending and active orders across all restaurants
+        List<Order> pendingOrders = new ArrayList<>();
+        List<Order> activeOrders = new ArrayList<>();
+
         for (Restaurant restaurant : restaurants) {
             List<Order> orders = orderService.getOrdersByRestaurantId(restaurant.getId());
-            pendingCount += orders.stream().filter(o -> o.getStatus() == OrderStatus.PENDING).count();
-            activeCount += orders.stream().filter(o ->
-                    o.getStatus() == OrderStatus.ACCEPTED ||
-                    o.getStatus() == OrderStatus.PREPARING ||
-                    o.getStatus() == OrderStatus.READY_FOR_PICKUP ||
-                    o.getStatus() == OrderStatus.OUT_FOR_DELIVERY
-            ).count();
+            pendingOrders.addAll(orders.stream()
+                    .filter(o -> o.getStatus() == OrderStatus.PENDING)
+                    .collect(Collectors.toList()));
+            activeOrders.addAll(orders.stream()
+                    .filter(o -> o.getStatus() == OrderStatus.ACCEPTED ||
+                                 o.getStatus() == OrderStatus.PREPARING ||
+                                 o.getStatus() == OrderStatus.READY_FOR_PICKUP ||
+                                 o.getStatus() == OrderStatus.OUT_FOR_DELIVERY)
+                    .collect(Collectors.toList()));
         }
-        model.addAttribute("pendingOrdersCount", pendingCount);
-        model.addAttribute("activeOrdersCount", activeCount);
+
+        model.addAttribute("pendingOrders", pendingOrders);
+        model.addAttribute("activeOrders", activeOrders);
 
         return "owner/dashboard";
+    }
+
+    @GetMapping("/menu")
+    public String menu(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        List<Restaurant> restaurants = restaurantService.getRestaurantsByOwnerId(userDetails.getId());
+
+        if (restaurants.isEmpty()) {
+            // No restaurant yet, redirect to create one
+            return "redirect:/owner/restaurants/new";
+        }
+
+        // Use the first restaurant (simplified - owner has one restaurant)
+        Restaurant restaurant = restaurants.get(0);
+        model.addAttribute("restaurant", restaurant);
+        model.addAttribute("menuItems", menuItemService.getMenuItemsByRestaurantId(restaurant.getId()));
+
+        return "owner/menu";
+    }
+
+    @PostMapping("/menu/save")
+    public String saveMenu(@AuthenticationPrincipal CustomUserDetails userDetails,
+                          @RequestParam Long restaurantId,
+                          @RequestParam(required = false) List<Long> deleteIds,
+                          @RequestParam Map<String, String> allParams,
+                          RedirectAttributes redirectAttributes) {
+        // Verify ownership
+        Restaurant restaurant = restaurantService.getRestaurantById(restaurantId)
+                .filter(r -> r.getOwner().getId().equals(userDetails.getId()))
+                .orElse(null);
+
+        if (restaurant == null) {
+            redirectAttributes.addFlashAttribute("error", "Restaurant not found");
+            return "redirect:/owner/menu";
+        }
+
+        // Delete items marked for deletion
+        if (deleteIds != null) {
+            for (Long deleteId : deleteIds) {
+                menuItemService.deleteMenuItem(deleteId);
+            }
+        }
+
+        // Process items from form
+        int index = 0;
+        while (allParams.containsKey("items[" + index + "].name")) {
+            String idStr = allParams.get("items[" + index + "].id");
+            String name = allParams.get("items[" + index + "].name");
+            String description = allParams.get("items[" + index + "].description");
+            String priceStr = allParams.get("items[" + index + "].price");
+
+            if (name != null && !name.trim().isEmpty() && priceStr != null) {
+                BigDecimal price = new BigDecimal(priceStr);
+
+                if (idStr != null && !idStr.isEmpty()) {
+                    // Update existing item
+                    Long itemId = Long.parseLong(idStr);
+                    menuItemService.getMenuItemById(itemId).ifPresent(item -> {
+                        item.setName(name);
+                        item.setDescription(description);
+                        item.setPrice(price);
+                        menuItemService.updateMenuItem(itemId, item);
+                    });
+                } else {
+                    // Create new item
+                    MenuItem newItem = new MenuItem();
+                    newItem.setName(name);
+                    newItem.setDescription(description);
+                    newItem.setPrice(price);
+                    newItem.setAvailable(true);
+                    menuItemService.createMenuItem(restaurantId, newItem);
+                }
+            }
+            index++;
+        }
+
+        redirectAttributes.addFlashAttribute("success", "Menu saved successfully");
+        return "redirect:/owner/menu";
     }
 
     // ========== Restaurants ==========
@@ -101,7 +190,7 @@ public class OwnerWebController {
 
         restaurantService.createRestaurant(userDetails.getId(), restaurant);
         redirectAttributes.addFlashAttribute("success", "Το κατάστημα δημιουργήθηκε");
-        return "redirect:/owner/restaurants";
+        return "redirect:/owner/dashboard";
     }
 
     @GetMapping("/restaurants/{id}/edit")
@@ -273,18 +362,23 @@ public class OwnerWebController {
 
     @PostMapping("/orders/{id}/accept")
     public String acceptOrder(@AuthenticationPrincipal CustomUserDetails userDetails,
-                               @PathVariable Long id, RedirectAttributes redirectAttributes) {
+                               @PathVariable Long id,
+                               @RequestParam(required = false, defaultValue = "30") Integer etaMinutes,
+                               RedirectAttributes redirectAttributes) {
         return orderService.getOrderById(id)
                 .filter(order -> order.getRestaurant().getOwner().getId().equals(userDetails.getId()))
                 .filter(order -> order.getStatus() == OrderStatus.PENDING)
                 .map(order -> {
                     orderService.updateOrderStatus(id, OrderStatus.ACCEPTED);
+                    // Set the estimated delivery time
+                    LocalDateTime eta = LocalDateTime.now().plusMinutes(etaMinutes);
+                    orderService.setEstimatedDeliveryTime(id, eta);
                     redirectAttributes.addFlashAttribute("success", "Η παραγγελία αποδέχτηκε");
-                    return "redirect:/owner/orders";
+                    return "redirect:/owner/dashboard";
                 })
                 .orElseGet(() -> {
                     redirectAttributes.addFlashAttribute("error", "Δεν μπορεί να γίνει αποδοχή");
-                    return "redirect:/owner/orders";
+                    return "redirect:/owner/dashboard";
                 });
     }
 
@@ -297,11 +391,11 @@ public class OwnerWebController {
                 .map(order -> {
                     orderService.updateOrderStatus(id, OrderStatus.REJECTED);
                     redirectAttributes.addFlashAttribute("success", "Η παραγγελία απορρίφθηκε");
-                    return "redirect:/owner/orders";
+                    return "redirect:/owner/dashboard";
                 })
                 .orElseGet(() -> {
                     redirectAttributes.addFlashAttribute("error", "Δεν μπορεί να γίνει απόρριψη");
-                    return "redirect:/owner/orders";
+                    return "redirect:/owner/dashboard";
                 });
     }
 
@@ -316,11 +410,11 @@ public class OwnerWebController {
                     OrderStatus newStatus = OrderStatus.valueOf(status);
                     orderService.updateOrderStatus(id, newStatus);
                     redirectAttributes.addFlashAttribute("success", "Η κατάσταση ενημερώθηκε");
-                    return "redirect:/owner/orders";
+                    return "redirect:/owner/dashboard";
                 })
                 .orElseGet(() -> {
                     redirectAttributes.addFlashAttribute("error", "Σφάλμα ενημέρωσης");
-                    return "redirect:/owner/orders";
+                    return "redirect:/owner/dashboard";
                 });
     }
 }

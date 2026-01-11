@@ -197,4 +197,12 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getOrdersInDateRange(LocalDateTime start, LocalDateTime end) {
         return orderRepository.findByCreatedAtBetween(start, end);
     }
+
+    @Override
+    public Order setEstimatedDeliveryTime(Long orderId, LocalDateTime estimatedTime) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+        order.setEstimatedDeliveryTime(estimatedTime);
+        return orderRepository.save(order);
+    }
 }

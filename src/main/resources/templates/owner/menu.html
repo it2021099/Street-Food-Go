@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Management - StreetFoodGo Restaurant</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #3ecbcf 0%, #8ed6a8 50%, #e8de7a 100%);
+            background-attachment: fixed;
+        }
+
+        .header {
+            background-color: #1a8a8f;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .burger-icon {
+            font-size: 32px;
+        }
+
+        .welcome-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .username {
+            color: #ff6b9d;
+            font-weight: 600;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 36px;
+            color: #f4d03f;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .logo-suffix {
+            font-family: 'Fredoka One', cursive;
+            font-size: 24px;
+            color: #ff6b9d;
+            margin-left: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+
+        .main-content {
+            padding-top: 100px;
+            min-height: 100vh;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+        }
+
+        .layout-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 150px;
+            flex-shrink: 0;
+        }
+
+        .nav-btn {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            background-color: #ff6b9d;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .nav-btn:hover {
+            background-color: #ff5089;
+            transform: translateY(-2px);
+        }
+
+        /* Content area */
+        .content-area {
+            flex: 1;
+        }
+
+        /* Edit button */
+        .edit-btn-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .edit-btn {
+            padding: 15px 60px;
+            background-color: #ff6b9d;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .edit-btn:hover {
+            background-color: #ff5089;
+            transform: translateY(-2px);
+        }
+
+        /* Menu items */
+        .menu-items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-item-card {
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 15px;
+            padding: 25px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .menu-item-info {
+            flex: 1;
+        }
+
+        .menu-item-name {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .menu-item-description {
+            color: white;
+            font-size: 14px;
+            opacity: 0.9;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .menu-item-price {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            margin-left: 20px;
+        }
+
+        /* Editable inputs (hidden by default) */
+        .edit-input {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #333;
+            width: 100%;
+            display: none;
+        }
+
+        .edit-input.name-input {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .edit-input.price-input {
+            width: 100px;
+            text-align: right;
+        }
+
+        /* Edit mode styles */
+        body.edit-mode .menu-item-name,
+        body.edit-mode .menu-item-description,
+        body.edit-mode .menu-item-price-text {
+            display: none;
+        }
+
+        body.edit-mode .edit-input {
+            display: block;
+        }
+
+        body.edit-mode .edit-input.price-input {
+            display: inline-block;
+        }
+
+        /* Add button */
+        .add-btn-container {
+            text-align: center;
+            margin-top: 30px;
+            display: none;
+        }
+
+        body.edit-mode .add-btn-container {
+            display: block;
+        }
+
+        .add-btn {
+            width: 60px;
+            height: 60px;
+            background-color: #ff6b9d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 32px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-btn:hover {
+            background-color: #ff5089;
+            transform: scale(1.1);
+        }
+
+        /* Delete button (only in edit mode) */
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 20px;
+            cursor: pointer;
+            margin-left: 15px;
+            display: none;
+            transition: transform 0.2s;
+        }
+
+        body.edit-mode .delete-btn {
+            display: inline-block;
+        }
+
+        .delete-btn:hover {
+            transform: scale(1.2);
+        }
+
+        /* Alert messages */
+        .alert {
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .alert-success {
+            background-color: rgba(40, 167, 69, 0.9);
+            color: white;
+        }
+
+        .alert-error {
+            background-color: rgba(220, 53, 69, 0.9);
+            color: white;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            color: white;
+            padding: 60px 20px;
+            font-size: 18px;
+        }
+
+        /* New item row styling */
+        .menu-item-card.new-item {
+            border: 2px dashed rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <span class="burger-icon">🍔</span>
+            <span class="welcome-text">Welcome <span class="username" th:text="${#authentication.name}">UserName</span></span>
+        </div>
+        <div class="header-center">
+            <a href="/owner/dashboard" class="logo">StreetFoodGo<span class="logo-suffix">Restaurant</span></a>
+        </div>
+        <div class="header-right">
+            <a href="/logout" class="nav-link">Log out</a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Alert messages -->
+        <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+
+        <div class="layout-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <a href="/owner/dashboard" class="nav-btn">Orders</a>
+            </div>
+
+            <!-- Content -->
+            <div class="content-area">
+                <!-- Edit/Done button -->
+                <div class="edit-btn-container">
+                    <button type="button" class="edit-btn" id="editBtn" onclick="toggleEditMode()">Edit</button>
+                </div>
+
+                <!-- Menu items form -->
+                <form id="menuForm" th:action="@{/owner/menu/save}" method="post">
+                    <input type="hidden" name="restaurantId" th:value="${restaurant.id}">
+
+                    <div class="menu-items-container" id="menuItemsContainer">
+                        <div th:if="${menuItems == null or menuItems.isEmpty()}" class="empty-state" id="emptyState">
+                            No menu items yet. Click Edit to add items.
+                        </div>
+
+                        <div th:each="item, iterStat : ${menuItems}" class="menu-item-card" th:data-id="${item.id}">
+                            <div class="menu-item-info">
+                                <div class="menu-item-name" th:text="${item.name}">Item Name</div>
+                                <input type="text" class="edit-input name-input"
+                                       th:name="'items[' + ${iterStat.index} + '].name'"
+                                       th:value="${item.name}" placeholder="Item name" required>
+                                <input type="hidden" th:name="'items[' + ${iterStat.index} + '].id'" th:value="${item.id}">
+
+                                <div class="menu-item-description" th:text="${item.description}">Item description</div>
+                                <input type="text" class="edit-input"
+                                       th:name="'items[' + ${iterStat.index} + '].description'"
+                                       th:value="${item.description}" placeholder="Description">
+                            </div>
+                            <div class="menu-item-price">
+                                <span class="menu-item-price-text" th:text="${#numbers.formatDecimal(item.price, 1, 2)} + '€'">0.00€</span>
+                                <input type="number" step="0.01" min="0" class="edit-input price-input"
+                                       th:name="'items[' + ${iterStat.index} + '].price'"
+                                       th:value="${item.price}" placeholder="0.00" required>
+                            </div>
+                            <button type="button" class="delete-btn" onclick="deleteItem(this)" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add button -->
+                    <div class="add-btn-container">
+                        <button type="button" class="add-btn" onclick="addNewItem()" title="Add item">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script th:inline="javascript">
+        let isEditMode = false;
+        let itemIndex = /*[[${menuItems != null ? menuItems.size() : 0}]]*/ 0;
+        const restaurantId = /*[[${restaurant.id}]]*/ 0;
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const body = document.body;
+            const editBtn = document.getElementById('editBtn');
+            const form = document.getElementById('menuForm');
+
+            if (isEditMode) {
+                body.classList.add('edit-mode');
+                editBtn.textContent = 'Done';
+            } else {
+                body.classList.remove('edit-mode');
+                editBtn.textContent = 'Edit';
+                // Submit the form to save changes
+                form.submit();
+            }
+        }
+
+        function addNewItem() {
+            const container = document.getElementById('menuItemsContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+
+            const newCard = document.createElement('div');
+            newCard.className = 'menu-item-card new-item';
+            newCard.innerHTML = `
+                <div class="menu-item-info">
+                    <div class="menu-item-name"></div>
+                    <input type="text" class="edit-input name-input" style="display:block;"
+                           name="items[${itemIndex}].name" placeholder="Item name" required>
+                    <input type="hidden" name="items[${itemIndex}].id" value="">
+
+                    <div class="menu-item-description"></div>
+                    <input type="text" class="edit-input" style="display:block;"
+                           name="items[${itemIndex}].description" placeholder="Description">
+                </div>
+                <div class="menu-item-price">
+                    <span class="menu-item-price-text"></span>
+                    <input type="number" step="0.01" min="0" class="edit-input price-input" style="display:inline-block;"
+                           name="items[${itemIndex}].price" placeholder="0.00" required>
+                </div>
+                <button type="button" class="delete-btn" style="display:inline-block;" onclick="deleteItem(this)" title="Delete">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+
+            container.appendChild(newCard);
+            itemIndex++;
+
+            // Focus on the name input
+            newCard.querySelector('.name-input').focus();
+        }
+
+        function deleteItem(btn) {
+            const card = btn.closest('.menu-item-card');
+            const itemId = card.dataset.id;
+
+            if (itemId) {
+                // Existing item - mark for deletion by adding hidden input
+                const deleteInput = document.createElement('input');
+                deleteInput.type = 'hidden';
+                deleteInput.name = 'deleteIds';
+                deleteInput.value = itemId;
+                document.getElementById('menuForm').appendChild(deleteInput);
+            }
+
+            card.remove();
+
+            // Show empty state if no items left
+            const container = document.getElementById('menuItemsContainer');
+            if (container.querySelectorAll('.menu-item-card').length === 0) {
+                const emptyState = document.getElementById('emptyState');
+                if (emptyState) {
+                    emptyState.style.display = 'block';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

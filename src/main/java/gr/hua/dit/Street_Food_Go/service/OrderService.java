@@ -30,4 +30,6 @@ public interface OrderService {
     Order cancelOrder(Long orderId);
 
     List<Order> getOrdersInDateRange(LocalDateTime start, LocalDateTime end);
+
+    Order setEstimatedDeliveryTime(Long orderId, LocalDateTime estimatedTime);
 }

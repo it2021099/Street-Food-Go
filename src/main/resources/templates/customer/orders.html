@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - StreetFoodGo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #3ecbcf 0%, #8ed6a8 50%, #e8de7a 100%);
+            background-attachment: fixed;
+        }
+
+        .header {
+            background-color: #1a8a8f;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .burger-icon {
+            font-size: 32px;
+        }
+
+        .welcome-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .username {
+            color: #ff6b9d;
+            font-weight: 600;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 36px;
+            color: #f4d03f;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+
+        .main-content {
+            padding-top: 90px;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .page-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 28px;
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .orders-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .order-card {
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 15px;
+            padding: 20px 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: block;
+        }
+
+        .order-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .order-id {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .order-status {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .status-accepted {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .status-preparing {
+            background-color: #9b59b6;
+            color: white;
+        }
+
+        .status-ready {
+            background-color: #00c4cc;
+            color: white;
+        }
+
+        .status-out {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .status-delivered {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .status-completed {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .status-cancelled, .status-rejected {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .order-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            color: white;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-item i {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .info-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .info-value {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .eta-highlight {
+            background-color: rgba(255, 107, 157, 0.9);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .eta-highlight i {
+            font-size: 18px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: white;
+            padding: 60px 20px;
+            font-size: 18px;
+        }
+
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #ff6b9d;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: #ff5089;
+            transform: translateY(-2px);
+        }
+
+        /* Alert messages */
+        .alert {
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .alert-success {
+            background-color: rgba(40, 167, 69, 0.9);
+            color: white;
+        }
+
+        .alert-error {
+            background-color: rgba(220, 53, 69, 0.9);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <span class="burger-icon">🍔</span>
+            <span class="welcome-text">Welcome <span class="username" th:text="${#authentication.name}">UserName</span></span>
+        </div>
+        <div class="header-center">
+            <a href="/customer/dashboard" class="logo">StreetFoodGo</a>
+        </div>
+        <div class="header-right">
+            <a href="/customer/dashboard" class="nav-link">Home</a>
+            <a href="/logout" class="nav-link">Log out</a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Alert messages -->
+        <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+
+        <h1 class="page-title">My Orders</h1>
+
+        <div class="orders-container">
+            <div th:if="${orders == null or orders.isEmpty()}" class="empty-state">
+                <i class="fa-solid fa-receipt"></i>
+                <p>You haven't placed any orders yet.</p>
+                <a href="/customer/dashboard" class="back-btn">Browse Restaurants</a>
+            </div>
+
+            <a th:each="order : ${orders}" th:href="@{/customer/orders/{id}(id=${order.id})}" class="order-card">
+                <div class="order-header">
+                    <span class="order-id">
+                        <i class="fa-solid fa-receipt"></i>
+                        Order #<span th:text="${order.id}">123</span>
+                    </span>
+                    <span class="order-status"
+                          th:classappend="${order.status.name() == 'PENDING'} ? 'status-pending' :
+                                          (${order.status.name() == 'ACCEPTED'} ? 'status-accepted' :
+                                          (${order.status.name() == 'PREPARING'} ? 'status-preparing' :
+                                          (${order.status.name() == 'READY_FOR_PICKUP'} ? 'status-ready' :
+                                          (${order.status.name() == 'OUT_FOR_DELIVERY'} ? 'status-out' :
+                                          (${order.status.name() == 'DELIVERED' or order.status.name() == 'COMPLETED'} ? 'status-delivered' :
+                                          'status-cancelled')))))"
+                          th:text="${order.status.name().replace('_', ' ')}">PENDING</span>
+                </div>
+                <div class="order-info">
+                    <div class="info-item">
+                        <i class="fa-solid fa-store"></i>
+                        <span class="info-value" th:text="${order.restaurant.name}">Restaurant Name</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-euro-sign"></i>
+                        <span class="info-value" th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)}">0.00</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-truck" th:if="${order.orderType.name() == 'DELIVERY'}"></i>
+                        <i class="fa-solid fa-bag-shopping" th:if="${order.orderType.name() != 'DELIVERY'}"></i>
+                        <span class="info-value" th:text="${order.orderType.name() == 'DELIVERY'} ? 'Delivery' : 'Pickup'">Delivery</span>
+                    </div>
+                    <div class="eta-highlight" th:if="${order.estimatedDeliveryTime != null and order.status.name() != 'DELIVERED' and order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED'}">
+                        <i class="fa-solid fa-clock"></i>
+                        <span class="info-value" th:text="${#temporals.format(order.estimatedDeliveryTime, 'HH:mm')}">12:30</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </main>
+</body>
+</html>
