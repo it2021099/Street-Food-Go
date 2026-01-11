@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${restaurant.name} + ' - StreetFoodGo'">Restaurant - StreetFoodGo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #3ecbcf 0%, #8ed6a8 50%, #e8de7a 100%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background-color: #1a8a8f;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .burger-icon {
+            font-size: 32px;
+        }
+
+        .welcome-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 36px;
+            color: #f4d03f;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+
+        .main-content {
+            padding-top: 70px;
+            min-height: 100vh;
+            padding: 20px;
+            transition: margin-right 0.3s ease;
+        }
+
+        .main-content.cart-open {
+            margin-right: 350px;
+        }
+
+        .restaurant-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .restaurant-info-card {
+            background: linear-gradient(180deg, #a8b5d6 0%, #b8c5e0 100%);
+            border-radius: 15px;
+            padding: 30px 35px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .restaurant-cuisine {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .restaurant-description {
+            color: white;
+            font-size: 16px;
+            line-height: 1.5;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .menu-items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-item-card {
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 15px;
+            padding: 25px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .menu-item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .menu-item-info {
+            flex: 1;
+        }
+
+        .menu-item-name {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .menu-item-description {
+            color: white;
+            font-size: 14px;
+            opacity: 0.9;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .menu-item-price {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            margin-left: 20px;
+        }
+
+        /* Cart Icon Button */
+        .cart-icon-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(180deg, #d4b8c8 0%, #e8c8d8 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            z-index: 999;
+            border: none;
+        }
+
+        .cart-icon-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+        }
+
+        .cart-icon-btn i {
+            font-size: 28px;
+            color: #333;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ff6b9d;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Slide-in Cart Panel */
+        .cart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.3);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 1000;
+        }
+
+        .cart-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .cart-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100vh;
+            background: linear-gradient(180deg, #3ecbcf 0%, #8ed6a8 50%, #e8de7a 100%);
+            box-shadow: -5px 0 30px rgba(0,0,0,0.2);
+            transition: right 0.3s ease;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .cart-panel.active {
+            right: 0;
+        }
+
+        .cart-header {
+            background-color: #1a8a8f;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cart-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 24px;
+            color: #f4d03f;
+        }
+
+        .cart-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .cart-close:hover {
+            opacity: 0.8;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .cart-item {
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .cart-item-details {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.8);
+            color: #333;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .qty-btn:hover {
+            background: white;
+        }
+
+        .qty-value {
+            color: white;
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .cart-item-price {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .cart-empty {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+            font-size: 16px;
+        }
+
+        .cart-footer {
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 25px;
+            background-color: #00c4cc;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .checkout-btn:hover {
+            background-color: #00b0b8;
+            transform: translateY(-2px);
+        }
+
+        .checkout-btn:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            background: #00c4cc;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 998;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <span class="burger-icon">🍔</span>
+            <span class="welcome-text">Welcome to <span th:text="${restaurant.name}">{Restaurant.name}</span></span>
+        </div>
+        <div class="header-center">
+            <a href="/customer/dashboard" class="logo">StreetFoodGo</a>
+        </div>
+        <div class="header-right">
+            <a href="/logout" class="nav-link">Log out</a>
+        </div>
+    </header>
+
+    <main class="main-content" id="mainContent">
+        <div class="restaurant-content">
+            <!-- Restaurant Info Card -->
+            <div class="restaurant-info-card">
+                <p class="restaurant-cuisine">
+                    <span th:text="${restaurant.cuisineType}">{cuisineType}</span> cuisine
+                </p>
+                <p class="restaurant-description" th:text="${restaurant.description}">
+                    Restaurant description goes here...
+                </p>
+            </div>
+
+            <!-- Menu Items -->
+            <div class="menu-items-container">
+                <div th:each="item : ${menuItems}"
+                     class="menu-item-card"
+                     th:data-id="${item.id}"
+                     th:data-name="${item.name}"
+                     th:data-price="${item.price}"
+                     onclick="addToCart(this)">
+                    <div class="menu-item-info">
+                        <div class="menu-item-name" th:text="${item.name}">MenuItem.name</div>
+                        <div class="menu-item-description" th:text="${item.description}">MenuItem.description</div>
+                    </div>
+                    <div class="menu-item-price">
+                        <span th:text="${#numbers.formatDecimal(item.price, 1, 2)} + '€'">0.00€</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cart Icon Button -->
+    <button class="cart-icon-btn" onclick="toggleCart()">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span class="cart-badge" id="cartBadge">0</span>
+    </button>
+
+    <!-- Cart Overlay -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+
+    <!-- Slide-in Cart Panel -->
+    <div class="cart-panel" id="cartPanel">
+        <div class="cart-header">
+            <span class="cart-title">Your Cart</span>
+            <button class="cart-close" onclick="toggleCart()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="cart-items" id="cartItems">
+            <div class="cart-empty" id="cartEmpty">Your cart is empty</div>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Sum Price</span>
+                <span id="cartTotal">0.00€</span>
+            </div>
+            <form id="checkoutForm" th:action="@{/customer/checkout}" method="post">
+                <input type="hidden" name="restaurantId" th:value="${restaurant.id}">
+                <input type="hidden" name="cartData" id="cartDataInput">
+                <button type="submit" class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">Added to cart!</div>
+
+    <script th:inline="javascript">
+        const restaurantId = /*[[${restaurant.id}]]*/ 0;
+        const CART_KEY = 'streetfoodgo_cart_' + restaurantId;
+
+        // Load cart from localStorage
+        function getCart() {
+            const cart = localStorage.getItem(CART_KEY);
+            return cart ? JSON.parse(cart) : [];
+        }
+
+        // Save cart to localStorage
+        function saveCart(cart) {
+            localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            updateCartUI();
+        }
+
+        // Add item to cart
+        function addToCart(element) {
+            const id = element.dataset.id;
+            const name = element.dataset.name;
+            const price = parseFloat(element.dataset.price);
+
+            let cart = getCart();
+            const existingItem = cart.find(item => item.id === id);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ id, name, price, quantity: 1 });
+            }
+
+            saveCart(cart);
+            showToast('Added to cart!');
+        }
+
+        // Update quantity
+        function updateQuantity(id, delta) {
+            let cart = getCart();
+            const item = cart.find(item => item.id === id);
+
+            if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) {
+                    cart = cart.filter(i => i.id !== id);
+                }
+                saveCart(cart);
+            }
+        }
+
+        // Toggle cart panel
+        function toggleCart() {
+            const panel = document.getElementById('cartPanel');
+            const overlay = document.getElementById('cartOverlay');
+            const mainContent = document.getElementById('mainContent');
+
+            panel.classList.toggle('active');
+            overlay.classList.toggle('active');
+            mainContent.classList.toggle('cart-open');
+        }
+
+        // Update cart UI
+        function updateCartUI() {
+            const cart = getCart();
+            const cartItems = document.getElementById('cartItems');
+            const cartEmpty = document.getElementById('cartEmpty');
+            const cartBadge = document.getElementById('cartBadge');
+            const cartTotal = document.getElementById('cartTotal');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            const cartDataInput = document.getElementById('cartDataInput');
+
+            // Update badge
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartBadge.textContent = totalItems;
+
+            // Update cart items
+            if (cart.length === 0) {
+                cartEmpty.style.display = 'block';
+                cartItems.querySelectorAll('.cart-item').forEach(el => el.remove());
+                checkoutBtn.disabled = true;
+            } else {
+                cartEmpty.style.display = 'none';
+                checkoutBtn.disabled = false;
+
+                // Clear existing items (except empty message)
+                cartItems.querySelectorAll('.cart-item').forEach(el => el.remove());
+
+                // Add cart items
+                let total = 0;
+                cart.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+
+                    const cartItemEl = document.createElement('div');
+                    cartItemEl.className = 'cart-item';
+                    cartItemEl.innerHTML = `
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-details">
+                                <div class="quantity-controls">
+                                    <button class="qty-btn" onclick="updateQuantity('${item.id}', -1)">-</button>
+                                    <span class="qty-value">${item.quantity}</span>
+                                    <button class="qty-btn" onclick="updateQuantity('${item.id}', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="cart-item-price">${itemTotal.toFixed(2)}€</div>
+                    `;
+                    cartItems.appendChild(cartItemEl);
+                });
+
+                cartTotal.textContent = total.toFixed(2) + '€';
+            }
+
+            // Update hidden input for form submission
+            cartDataInput.value = JSON.stringify(cart);
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Initialize cart UI on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartUI();
+        });
+    </script>
+</body>
+</html>

@@ -45,8 +45,70 @@ public class CustomerWebController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard() {
+    public String dashboard(@RequestParam(required = false) String search, Model model) {
+        List<Restaurant> restaurants;
+        if (search != null && !search.trim().isEmpty()) {
+            restaurants = restaurantService.searchRestaurants(search.trim());
+            model.addAttribute("searchQuery", search);
+        } else {
+            restaurants = restaurantService.getAllRestaurants();
+        }
+        model.addAttribute("restaurants", restaurants);
         return "customer/dashboard";
+    }
+
+    @GetMapping("/restaurant/{id}")
+    public String restaurantDetail(@PathVariable Long id, Model model) {
+        return restaurantService.getRestaurantById(id)
+                .map(restaurant -> {
+                    model.addAttribute("restaurant", restaurant);
+                    model.addAttribute("menuItems", menuItemService.getAvailableMenuItems(id));
+                    return "customer/restaurant-detail";
+                })
+                .orElse("redirect:/customer/dashboard");
+    }
+
+    @PostMapping("/checkout")
+    public String checkout(@AuthenticationPrincipal CustomUserDetails userDetails,
+                          @RequestParam Long restaurantId,
+                          @RequestParam String cartData,
+                          RedirectAttributes redirectAttributes) {
+        try {
+            // Parse cart data from JSON
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            List<Map<String, Object>> cartItems = mapper.readValue(cartData,
+                    new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
+
+            if (cartItems.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Cart is empty");
+                return "redirect:/customer/restaurant/" + restaurantId;
+            }
+
+            // Create order (simplified - no delivery address required)
+            Order order = orderService.createOrder(
+                    userDetails.getId(),
+                    restaurantId,
+                    OrderType.PICKUP,
+                    null
+            );
+
+            // Add items to order
+            for (Map<String, Object> item : cartItems) {
+                Long menuItemId = Long.parseLong(item.get("id").toString());
+                int quantity = ((Number) item.get("quantity")).intValue();
+                orderService.addItemToOrder(order.getId(), menuItemId, quantity);
+            }
+
+            return "redirect:/customer/order-success";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to create order");
+            return "redirect:/customer/restaurant/" + restaurantId;
+        }
+    }
+
+    @GetMapping("/order-success")
+    public String orderSuccess() {
+        return "customer/order-success";
     }
 
     // ========== Addresses ==========

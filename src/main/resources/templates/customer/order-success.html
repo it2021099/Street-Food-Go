@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed - StreetFoodGo</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #3ecbcf 0%, #8ed6a8 50%, #e8de7a 100%);
+            background-attachment: fixed;
+        }
+
+        .header {
+            background-color: #1a8a8f;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .burger-icon {
+            font-size: 32px;
+        }
+
+        .welcome-text {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .username {
+            color: #ff6b9d;
+            font-weight: 600;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 36px;
+            color: #f4d03f;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+
+        .main-content {
+            padding-top: 70px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .success-container {
+            text-align: center;
+        }
+
+        /* Animated Checkmark */
+        .checkmark-circle {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            margin: 0 auto 30px;
+        }
+
+        .checkmark-circle svg {
+            width: 120px;
+            height: 120px;
+        }
+
+        .checkmark-circle .circle {
+            stroke: #ff6b9d;
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 377;
+            stroke-dashoffset: 377;
+            animation: circle-draw 0.8s ease-out forwards;
+        }
+
+        .checkmark-circle .checkmark {
+            stroke: #ff6b9d;
+            stroke-width: 4;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 80;
+            stroke-dashoffset: 80;
+            animation: checkmark-draw 0.5s ease-out 0.6s forwards;
+        }
+
+        @keyframes circle-draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes checkmark-draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Pulse animation for the circle */
+        .checkmark-circle::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid #ff6b9d;
+            opacity: 0;
+            animation: pulse-ring 1s ease-out 1s forwards;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.3);
+                opacity: 0;
+            }
+        }
+
+        .success-text {
+            font-family: 'Fredoka One', cursive;
+            font-size: 32px;
+            color: #ff6b9d;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fade-in 0.5s ease-out 1s forwards;
+        }
+
+        @keyframes fade-in {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 25px;
+            background-color: #00c4cc;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            text-decoration: none;
+            margin-top: 20px;
+            opacity: 0;
+            animation: fade-in 0.5s ease-out 1.2s forwards;
+        }
+
+        .back-btn:hover {
+            background-color: #00b0b8;
+            transform: translateY(-2px);
+        }
+
+        /* Confetti animation */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            opacity: 0;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                opacity: 1;
+                top: -10px;
+                transform: translateX(0) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                top: 100vh;
+                transform: translateX(var(--drift)) rotate(720deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <span class="burger-icon">🍔</span>
+            <span class="welcome-text">Welcome <span class="username" th:text="${#authentication.name}">UserName</span></span>
+        </div>
+        <div class="header-center">
+            <a href="/customer/dashboard" class="logo">StreetFoodGo</a>
+        </div>
+        <div class="header-right">
+            <a href="/logout" class="nav-link">Log out</a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="success-container">
+            <!-- Animated Checkmark -->
+            <div class="checkmark-circle">
+                <svg viewBox="0 0 120 120">
+                    <circle class="circle" cx="60" cy="60" r="55"/>
+                    <path class="checkmark" d="M35 60 L52 77 L85 44"/>
+                </svg>
+            </div>
+
+            <h1 class="success-text">Order Confirmed</h1>
+
+            <a href="/customer/dashboard" class="back-btn">Back to Home</a>
+        </div>
+    </main>
+
+    <script>
+        // Create confetti on page load
+        function createConfetti() {
+            const colors = ['#ff6b9d', '#f4d03f', '#00c4cc', '#a8b5d6', '#8ed6a8'];
+            const confettiCount = 50;
+
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.setProperty('--drift', (Math.random() - 0.5) * 200 + 'px');
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+
+                    // Random shapes
+                    if (Math.random() > 0.5) {
+                        confetti.style.borderRadius = '50%';
+                    } else {
+                        confetti.style.width = '8px';
+                        confetti.style.height = '14px';
+                    }
+
+                    document.body.appendChild(confetti);
+
+                    // Remove confetti after animation
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 50);
+            }
+        }
+
+        // Clear cart after successful order
+        function clearCart() {
+            // Clear all cart data from localStorage
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.startsWith('streetfoodgo_cart_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            clearCart();
+            setTimeout(createConfetti, 800);
+        });
+    </script>
+</body>
+</html>
