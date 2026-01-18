@@ -250,6 +250,7 @@
             <a href="/customer/dashboard" class="logo">StreetFoodGo</a>
         </div>
         <div class="header-right">
+            <a href="/customer/orders" class="nav-link"><i class="fa-solid fa-receipt"></i> My Orders</a>
             <a href="/logout" class="nav-link">Log out</a>
         </div>
     </header>
@@ -264,9 +265,14 @@
                 </svg>
             </div>
 
-            <h1 class="success-text">Order Confirmed</h1>
+            <h1 class="success-text">Order Confirmed!</h1>
 
-            <a href="/customer/dashboard" class="back-btn">Back to Home</a>
+            <a th:if="${orderId != null}" th:href="@{/customer/orders/{id}(id=${orderId})}" class="back-btn">
+                <i class="fa-solid fa-receipt"></i> View Order Details
+            </a>
+            <a th:if="${orderId == null}" href="/customer/orders" class="back-btn">
+                <i class="fa-solid fa-list"></i> View My Orders
+            </a>
         </div>
     </main>
 

@@ -45,7 +45,8 @@ public class CustomerWebController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(@RequestParam(required = false) String search, Model model) {
+    public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails,
+                           @RequestParam(required = false) String search, Model model) {
         List<Restaurant> restaurants;
         if (search != null && !search.trim().isEmpty()) {
             restaurants = restaurantService.searchRestaurants(search.trim());
@@ -54,15 +55,30 @@ public class CustomerWebController {
             restaurants = restaurantService.getAllRestaurants();
         }
         model.addAttribute("restaurants", restaurants);
+
+        // Get active orders for the current user (not completed, not cancelled, not rejected)
+        List<Order> allOrders = orderService.getOrdersByCustomerId(userDetails.getId());
+        List<Order> activeOrders = allOrders.stream()
+                .filter(o -> o.getStatus() != OrderStatus.DELIVERED &&
+                            o.getStatus() != OrderStatus.COMPLETED &&
+                            o.getStatus() != OrderStatus.CANCELLED &&
+                            o.getStatus() != OrderStatus.REJECTED)
+                .collect(java.util.stream.Collectors.toList());
+        model.addAttribute("activeOrders", activeOrders);
+
         return "customer/dashboard";
     }
 
     @GetMapping("/restaurant/{id}")
-    public String restaurantDetail(@PathVariable Long id, Model model) {
+    public String restaurantDetail(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                   @PathVariable Long id, Model model) {
         return restaurantService.getRestaurantById(id)
                 .map(restaurant -> {
                     model.addAttribute("restaurant", restaurant);
                     model.addAttribute("menuItems", menuItemService.getAvailableMenuItems(id));
+                    // Pass customer's addresses for delivery option
+                    List<Address> addresses = addressService.getAddressesByUserId(userDetails.getId());
+                    model.addAttribute("addresses", addresses);
                     return "customer/restaurant-detail";
                 })
                 .orElse("redirect:/customer/dashboard");
@@ -72,8 +88,30 @@ public class CustomerWebController {
     public String checkout(@AuthenticationPrincipal CustomUserDetails userDetails,
                           @RequestParam Long restaurantId,
                           @RequestParam String cartData,
+                          @RequestParam(required = false, defaultValue = "PICKUP") String orderType,
+                          @RequestParam(required = false) Long addressId,
                           RedirectAttributes redirectAttributes) {
         try {
+            // Check if restaurant exists and is open
+            Restaurant restaurant = restaurantService.getRestaurantById(restaurantId).orElse(null);
+            if (restaurant == null) {
+                redirectAttributes.addFlashAttribute("error", "Restaurant not found");
+                return "redirect:/customer/dashboard";
+            }
+            if (!restaurant.isOpen()) {
+                redirectAttributes.addFlashAttribute("error", "This restaurant is currently closed");
+                return "redirect:/customer/restaurant/" + restaurantId;
+            }
+
+            // Parse order type
+            OrderType type = OrderType.valueOf(orderType);
+
+            // Validate delivery address for delivery orders
+            if (type == OrderType.DELIVERY && addressId == null) {
+                redirectAttributes.addFlashAttribute("error", "Please select a delivery address");
+                return "redirect:/customer/restaurant/" + restaurantId;
+            }
+
             // Parse cart data from JSON
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             List<Map<String, Object>> cartItems = mapper.readValue(cartData,
@@ -84,12 +122,30 @@ public class CustomerWebController {
                 return "redirect:/customer/restaurant/" + restaurantId;
             }
 
-            // Create order (simplified - no delivery address required)
+            // Calculate total and validate minimum order
+            BigDecimal total = BigDecimal.ZERO;
+            for (Map<String, Object> item : cartItems) {
+                Long menuItemId = Long.parseLong(item.get("id").toString());
+                int quantity = ((Number) item.get("quantity")).intValue();
+                MenuItem menuItem = menuItemService.getMenuItemById(menuItemId).orElse(null);
+                if (menuItem != null) {
+                    total = total.add(menuItem.getPrice().multiply(BigDecimal.valueOf(quantity)));
+                }
+            }
+
+            // Check minimum order value
+            if (restaurant.getMinimumOrderValue() != null && total.compareTo(restaurant.getMinimumOrderValue()) < 0) {
+                redirectAttributes.addFlashAttribute("error",
+                    "Minimum order is " + restaurant.getMinimumOrderValue() + "€. Your cart total is " + total + "€");
+                return "redirect:/customer/restaurant/" + restaurantId;
+            }
+
+            // Create order with delivery address (ETA calculated automatically via OSRM for delivery orders)
             Order order = orderService.createOrder(
                     userDetails.getId(),
                     restaurantId,
-                    OrderType.PICKUP,
-                    null
+                    type,
+                    type == OrderType.DELIVERY ? addressId : null
             );
 
             // Add items to order
@@ -99,15 +155,17 @@ public class CustomerWebController {
                 orderService.addItemToOrder(order.getId(), menuItemId, quantity);
             }
 
+            redirectAttributes.addFlashAttribute("orderId", order.getId());
             return "redirect:/customer/order-success";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to create order");
+            redirectAttributes.addFlashAttribute("error", "Failed to create order: " + e.getMessage());
             return "redirect:/customer/restaurant/" + restaurantId;
         }
     }
 
     @GetMapping("/order-success")
-    public String orderSuccess() {
+    public String orderSuccess(@ModelAttribute("orderId") Long orderId, Model model) {
+        model.addAttribute("orderId", orderId);
         return "customer/order-success";
     }
 

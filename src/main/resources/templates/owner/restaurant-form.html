@@ -288,7 +288,15 @@
 
                 <div class="form-group">
                     <label class="form-label" for="cuisineType">Cuisine Type *</label>
-                    <input type="text" id="cuisineType" name="cuisineType" class="form-input" placeholder="e.g., American, Greek, Italian" required>
+                    <select id="cuisineType" name="cuisineType" class="form-input" required>
+                        <option value="">Select cuisine type</option>
+                        <option value="Greek">Greek</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Mexican">Mexican</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="American">American</option>
+                        <option value="Japanese">Japanese</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -312,13 +320,6 @@
                     <input type="number" step="0.01" min="0" id="minimumOrderValue" name="minimumOrderValue" class="form-input" placeholder="e.g., 10.00">
                 </div>
 
-                <div class="form-group">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="open" name="open" class="checkbox-input" value="true">
-                        <label class="checkbox-label" for="open">Open for orders</label>
-                    </div>
-                </div>
-
                 <button type="submit" class="submit-btn">
                     <i class="fa-solid fa-check"></i>
                     <span>Create Restaurant</span>
@@ -336,7 +337,15 @@
 
                 <div class="form-group">
                     <label class="form-label" for="cuisineType2">Cuisine Type *</label>
-                    <input type="text" id="cuisineType2" name="cuisineType" class="form-input" th:value="${restaurant.cuisineType}" required>
+                    <select id="cuisineType2" name="cuisineType" class="form-input" required>
+                        <option value="">Select cuisine type</option>
+                        <option value="Greek" th:selected="${restaurant.cuisineType == 'Greek'}">Greek</option>
+                        <option value="Italian" th:selected="${restaurant.cuisineType == 'Italian'}">Italian</option>
+                        <option value="Mexican" th:selected="${restaurant.cuisineType == 'Mexican'}">Mexican</option>
+                        <option value="Chinese" th:selected="${restaurant.cuisineType == 'Chinese'}">Chinese</option>
+                        <option value="American" th:selected="${restaurant.cuisineType == 'American'}">American</option>
+                        <option value="Japanese" th:selected="${restaurant.cuisineType == 'Japanese'}">Japanese</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -358,13 +367,6 @@
                 <div class="form-group">
                     <label class="form-label" for="minimumOrderValue2">Minimum Order Value (optional)</label>
                     <input type="number" step="0.01" min="0" id="minimumOrderValue2" name="minimumOrderValue" class="form-input" th:value="${restaurant.minimumOrderValue}">
-                </div>
-
-                <div class="form-group">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="open2" name="open" class="checkbox-input" value="true" th:checked="${restaurant.open}">
-                        <label class="checkbox-label" for="open2">Open for orders</label>
-                    </div>
                 </div>
 
                 <button type="submit" class="submit-btn">

@@ -53,6 +53,8 @@ public class OwnerWebController {
         }
 
         model.addAttribute("restaurantsCount", restaurants.size());
+        // Pass the first restaurant for the open/close toggle (simplified - owner has one restaurant)
+        model.addAttribute("restaurant", restaurants.get(0));
 
         // Get pending and active orders across all restaurants
         List<Order> pendingOrders = new ArrayList<>();
@@ -177,7 +179,6 @@ public class OwnerWebController {
                                     @RequestParam(required = false) Double latitude,
                                     @RequestParam(required = false) Double longitude,
                                     @RequestParam(required = false) BigDecimal minimumOrderValue,
-                                    @RequestParam(required = false) Boolean open,
                                     RedirectAttributes redirectAttributes) {
         Restaurant restaurant = new Restaurant();
         restaurant.setName(name);
@@ -186,7 +187,7 @@ public class OwnerWebController {
         restaurant.setLatitude(latitude);
         restaurant.setLongitude(longitude);
         restaurant.setMinimumOrderValue(minimumOrderValue);
-        restaurant.setOpen(open != null && open);
+        restaurant.setOpen(false); // New restaurants start as closed
 
         restaurantService.createRestaurant(userDetails.getId(), restaurant);
         redirectAttributes.addFlashAttribute("success", "Το κατάστημα δημιουργήθηκε");
@@ -214,7 +215,6 @@ public class OwnerWebController {
                                     @RequestParam(required = false) Double latitude,
                                     @RequestParam(required = false) Double longitude,
                                     @RequestParam(required = false) BigDecimal minimumOrderValue,
-                                    @RequestParam(required = false) Boolean open,
                                     RedirectAttributes redirectAttributes) {
         return restaurantService.getRestaurantById(id)
                 .filter(r -> r.getOwner().getId().equals(userDetails.getId()))
@@ -225,7 +225,7 @@ public class OwnerWebController {
                     existing.setLatitude(latitude);
                     existing.setLongitude(longitude);
                     existing.setMinimumOrderValue(minimumOrderValue);
-                    existing.setOpen(open != null && open);
+                    // Note: open/closed status is managed via the toggle endpoint
                     restaurantService.updateRestaurant(id, existing);
                     redirectAttributes.addFlashAttribute("success", "Το κατάστημα ενημερώθηκε");
                     return "redirect:/owner/restaurants";
@@ -246,9 +246,9 @@ public class OwnerWebController {
                         restaurantService.openRestaurant(id);
                         redirectAttributes.addFlashAttribute("success", "Το κατάστημα άνοιξε");
                     }
-                    return "redirect:/owner/restaurants";
+                    return "redirect:/owner/dashboard";
                 })
-                .orElse("redirect:/owner/restaurants");
+                .orElse("redirect:/owner/dashboard");
     }
 
     // ========== Menu ==========

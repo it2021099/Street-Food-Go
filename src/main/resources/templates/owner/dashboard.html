@@ -143,6 +143,59 @@
             transform: translateY(-2px);
         }
 
+        .toggle-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+        }
+
+        .toggle-label {
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+            text-align: center;
+        }
+
+        .status-toggle {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .status-toggle.open {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .status-toggle.closed {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .status-toggle:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        .restaurant-name {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+
         /* Panels */
         .panels-container {
             flex: 1;
@@ -307,8 +360,8 @@
         }
 
         .status-btn.completed {
-            background-color: white;
-            color: #333;
+            background-color: #2ecc71;
+            color: white;
         }
 
         .status-btn .icon {
@@ -316,7 +369,7 @@
         }
 
         .status-btn.completed .icon {
-            color: #2ecc71;
+            color: white;
         }
 
         .status-btn.current .icon {
@@ -403,6 +456,19 @@
             <!-- Sidebar -->
             <div class="sidebar">
                 <a href="/owner/menu" class="nav-btn">Menu</a>
+
+                <!-- Restaurant Open/Close Toggle -->
+                <div th:if="${restaurant != null}" class="toggle-section">
+                    <span class="toggle-label">Restaurant Status</span>
+                    <div class="restaurant-name" th:text="${restaurant.name}">Restaurant Name</div>
+                    <form th:action="@{/owner/restaurants/{id}/toggle(id=${restaurant.id})}" method="post">
+                        <button type="submit" class="status-toggle"
+                                th:classappend="${restaurant.open} ? 'open' : 'closed'"
+                                th:text="${restaurant.open} ? 'Open' : 'Closed'">
+                            Open
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <!-- Panels -->
@@ -449,6 +515,11 @@
                             <div class="status-user-info">
                                 <i class="fa-solid fa-user order-user-icon" style="color: #333;"></i>
                                 <span class="order-username" style="color: #333;" th:text="${order.customer.username}">User</span>
+                                <!-- Pickup Code Badge (shown when ready for pickup) -->
+                                <span th:if="${order.status.name() == 'READY_FOR_PICKUP' and order.orderType.name() == 'PICKUP'}"
+                                      style="background: #2ecc71; color: white; padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-left: 10px;">
+                                    Code: #<span th:text="${order.id}">123</span>
+                                </span>
                             </div>
                             <div class="eta-badge" th:if="${order.estimatedDeliveryTime != null}">
                                 <i class="fa-solid fa-clock"></i>
@@ -459,10 +530,10 @@
                                 <form th:action="@{/owner/orders/{id}/status(id=${order.id})}" method="post" style="display:inline;">
                                     <input type="hidden" name="status" value="PREPARING">
                                     <button type="submit" class="status-btn"
-                                            th:classappend="${order.status.name() == 'ACCEPTED'} ? 'current' : (${order.status.ordinal() > T(gr.hua.dit.Street_Food_Go.model.OrderStatus).PREPARING.ordinal()} ? 'completed' : 'waiting')"
+                                            th:classappend="${order.status.name() == 'ACCEPTED'} ? 'current' : (${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).PREPARING.ordinal()} ? 'completed' : 'waiting')"
                                             th:disabled="${order.status.name() != 'ACCEPTED'}">
                                         <span>Preparing</span>
-                                        <i class="icon" th:classappend="${order.status.name() == 'ACCEPTED'} ? 'fa-solid fa-clock' : (${order.status.ordinal() > T(gr.hua.dit.Street_Food_Go.model.OrderStatus).PREPARING.ordinal()} ? 'fa-solid fa-check' : 'fa-regular fa-clock')"></i>
+                                        <i class="icon" th:classappend="${order.status.name() == 'ACCEPTED'} ? 'fa-solid fa-clock' : (${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).PREPARING.ordinal()} ? 'fa-solid fa-check' : 'fa-regular fa-clock')"></i>
                                     </button>
                                 </form>
 
@@ -470,10 +541,10 @@
                                 <form th:action="@{/owner/orders/{id}/status(id=${order.id})}" method="post" style="display:inline;">
                                     <input type="hidden" name="status" value="READY_FOR_PICKUP">
                                     <button type="submit" class="status-btn"
-                                            th:classappend="${order.status.name() == 'PREPARING'} ? 'current' : (${order.status.ordinal() > T(gr.hua.dit.Street_Food_Go.model.OrderStatus).READY_FOR_PICKUP.ordinal()} ? 'completed' : 'waiting')"
+                                            th:classappend="${order.status.name() == 'PREPARING'} ? 'current' : (${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).READY_FOR_PICKUP.ordinal()} ? 'completed' : 'waiting')"
                                             th:disabled="${order.status.name() != 'PREPARING'}">
                                         <span th:text="${order.orderType.name() == 'DELIVERY'} ? 'Ready' : 'Ready to Take'">Ready to Take</span>
-                                        <i class="icon" th:classappend="${order.status.name() == 'PREPARING'} ? 'fa-solid fa-clock' : (${order.status.ordinal() > T(gr.hua.dit.Street_Food_Go.model.OrderStatus).READY_FOR_PICKUP.ordinal()} ? 'fa-solid fa-check' : 'fa-regular fa-clock')"></i>
+                                        <i class="icon" th:classappend="${order.status.name() == 'PREPARING'} ? 'fa-solid fa-clock' : (${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).READY_FOR_PICKUP.ordinal()} ? 'fa-solid fa-check' : 'fa-regular fa-clock')"></i>
                                     </button>
                                 </form>
 
@@ -481,10 +552,10 @@
                                 <form th:if="${order.orderType.name() == 'DELIVERY'}" th:action="@{/owner/orders/{id}/status(id=${order.id})}" method="post" style="display:inline;">
                                     <input type="hidden" name="status" value="OUT_FOR_DELIVERY">
                                     <button type="submit" class="status-btn"
-                                            th:classappend="${order.status.name() == 'READY_FOR_PICKUP'} ? 'current' : (${order.status.ordinal() > T(gr.hua.dit.Street_Food_Go.model.OrderStatus).OUT_FOR_DELIVERY.ordinal()} ? 'completed' : 'waiting')"
+                                            th:classappend="${order.status.name() == 'READY_FOR_PICKUP'} ? 'current' : (${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).OUT_FOR_DELIVERY.ordinal()} ? 'completed' : 'waiting')"
                                             th:disabled="${order.status.name() != 'READY_FOR_PICKUP'}">
                                         <span>Dispatched</span>
-                                        <i class="icon" th:classappend="${order.status.name() == 'READY_FOR_PICKUP'} ? 'fa-solid fa-clock' : (${order.status.ordinal() > T(gr.hua.dit.Street_Food_Go.model.OrderStatus).OUT_FOR_DELIVERY.ordinal()} ? 'fa-solid fa-check' : 'fa-regular fa-clock')"></i>
+                                        <i class="icon" th:classappend="${order.status.name() == 'READY_FOR_PICKUP'} ? 'fa-solid fa-clock' : (${order.status.ordinal() >= T(gr.hua.dit.Street_Food_Go.model.OrderStatus).OUT_FOR_DELIVERY.ordinal()} ? 'fa-solid fa-check' : 'fa-regular fa-clock')"></i>
                                     </button>
                                 </form>
 

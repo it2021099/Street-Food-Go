@@ -144,10 +144,58 @@
             font-weight: 500;
         }
 
+        .eta-countdown {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: inline-block;
+        }
+
         .eta-completed {
             font-family: 'Fredoka One', cursive;
             font-size: 28px;
             color: white;
+        }
+
+        /* Pickup Code Card */
+        .pickup-code-card {
+            background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .pickup-code-label {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .pickup-code-value {
+            font-family: 'Fredoka One', cursive;
+            font-size: 48px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            letter-spacing: 5px;
+        }
+
+        .pickup-code-hint {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            margin-top: 15px;
+        }
+
+        .pickup-code-hint i {
+            margin-right: 5px;
         }
 
         /* Order Status Card */
@@ -429,7 +477,7 @@
             <a href="/customer/dashboard" class="logo">StreetFoodGo</a>
         </div>
         <div class="header-right">
-            <a href="/customer/orders" class="nav-link">My Orders</a>
+            <a href="/customer/orders" class="nav-link"><i class="fa-solid fa-receipt"></i> My Orders</a>
             <a href="/logout" class="nav-link">Log out</a>
         </div>
     </header>
@@ -455,16 +503,27 @@
                     </div>
                 </div>
                 <div th:if="${order.status.name() != 'DELIVERED' and order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED' and order.status.name() != 'REJECTED'}">
-                    <div class="eta-label">Estimated Arrival Time</div>
+                    <div class="eta-label">Should arrive by</div>
                     <div th:if="${order.estimatedDeliveryTime != null}">
                         <div class="eta-time" th:text="${#temporals.format(order.estimatedDeliveryTime, 'HH:mm')}">12:30</div>
                         <div class="eta-date" th:text="${#temporals.format(order.estimatedDeliveryTime, 'EEEE, d MMMM')}">Monday, 15 January</div>
+                        <div id="countdown" class="eta-countdown"></div>
                     </div>
                     <div th:if="${order.estimatedDeliveryTime == null}">
                         <div class="eta-pending">
-                            <i class="fa-solid fa-clock"></i> Calculating...
+                            <i class="fa-solid fa-clock"></i> Waiting for restaurant...
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Pickup Code Card (shown when order is ready for pickup) -->
+            <div class="pickup-code-card" th:if="${order.status.name() == 'READY_FOR_PICKUP' and order.orderType.name() == 'PICKUP'}">
+                <div class="pickup-code-label">Your Pickup Code</div>
+                <div class="pickup-code-value" th:text="'#' + ${order.id}">ABC123</div>
+                <div class="pickup-code-hint">
+                    <i class="fa-solid fa-info-circle"></i>
+                    Show this code to the store employee to collect your order
                 </div>
             </div>
 
@@ -571,5 +630,40 @@
             </div>
         </div>
     </main>
+
+    <!-- Countdown Timer Script -->
+    <script th:if="${order.estimatedDeliveryTime != null and order.status.name() != 'DELIVERED' and order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED' and order.status.name() != 'REJECTED'}" th:inline="javascript">
+        (function() {
+            var etaString = /*[[${#temporals.format(order.estimatedDeliveryTime, "yyyy-MM-dd'T'HH:mm:ss")}]]*/ '2024-01-01T12:00:00';
+            var eta = new Date(etaString);
+
+            function updateCountdown() {
+                var now = new Date();
+                var diff = eta - now;
+                var countdownEl = document.getElementById('countdown');
+
+                if (!countdownEl) return;
+
+                if (diff > 0) {
+                    var minutes = Math.floor(diff / 60000);
+                    var hours = Math.floor(minutes / 60);
+                    var mins = minutes % 60;
+
+                    if (hours > 0) {
+                        countdownEl.textContent = 'Arriving in ' + hours + 'h ' + mins + 'm';
+                    } else if (mins > 0) {
+                        countdownEl.textContent = 'Arriving in ' + mins + ' minute' + (mins !== 1 ? 's' : '');
+                    } else {
+                        countdownEl.textContent = 'Arriving any moment now!';
+                    }
+                } else {
+                    countdownEl.textContent = 'Should have arrived';
+                }
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 30000); // Update every 30 seconds
+        })();
+    </script>
 </body>
 </html>

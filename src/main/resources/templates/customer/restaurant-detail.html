@@ -91,7 +91,7 @@
         }
 
         .main-content {
-            padding-top: 70px;
+            padding-top: 90px;
             min-height: 100vh;
             padding: 20px;
             transition: margin-right 0.3s ease;
@@ -431,6 +431,149 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* Closed Banner */
+        .closed-banner {
+            background-color: #e74c3c;
+            color: white;
+            text-align: center;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .closed-banner i {
+            font-size: 20px;
+        }
+
+        /* Error Alert - Fixed at bottom */
+        .error-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px 20px;
+            font-size: 14px;
+            text-align: center;
+            background-color: #e74c3c;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+        }
+
+        .error-banner i {
+            font-size: 18px;
+        }
+
+        /* Minimum order notice */
+        .min-order-notice {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            color: white;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        /* Order Type Selection */
+        .order-type-section {
+            margin-bottom: 15px;
+        }
+
+        .order-type-label {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .order-type-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .order-type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            background: transparent;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .order-type-btn.active {
+            background: rgba(255,255,255,0.2);
+            border-color: #00c4cc;
+        }
+
+        .order-type-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Address Selection */
+        .address-section {
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .address-section.visible {
+            display: block;
+        }
+
+        .address-select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .address-select:focus {
+            outline: 2px solid #00c4cc;
+        }
+
+        .no-address-msg {
+            background: rgba(255,255,255,0.2);
+            padding: 12px;
+            border-radius: 10px;
+            color: white;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .no-address-msg a {
+            color: #ff6b9d;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .no-address-msg a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -443,12 +586,19 @@
             <a href="/customer/dashboard" class="logo">StreetFoodGo</a>
         </div>
         <div class="header-right">
+            <a href="/customer/orders" class="nav-link"><i class="fa-solid fa-receipt"></i> My Orders</a>
             <a href="/logout" class="nav-link">Log out</a>
         </div>
     </header>
 
     <main class="main-content" id="mainContent">
         <div class="restaurant-content">
+            <!-- Closed Banner -->
+            <div class="closed-banner" th:if="${!restaurant.open}">
+                <i class="fa-solid fa-store-slash"></i>
+                <span>This restaurant is currently closed</span>
+            </div>
+
             <!-- Restaurant Info Card -->
             <div class="restaurant-info-card">
                 <p class="restaurant-cuisine">
@@ -502,6 +652,40 @@
         </div>
 
         <div class="cart-footer">
+            <!-- Order Type Selection -->
+            <div class="order-type-section">
+                <span class="order-type-label">Order Type</span>
+                <div class="order-type-options">
+                    <button type="button" class="order-type-btn active" data-type="PICKUP" onclick="selectOrderType('PICKUP')">
+                        <i class="fa-solid fa-shopping-bag"></i> Pickup
+                    </button>
+                    <button type="button" class="order-type-btn" data-type="DELIVERY" onclick="selectOrderType('DELIVERY')">
+                        <i class="fa-solid fa-motorcycle"></i> Delivery
+                    </button>
+                </div>
+            </div>
+
+            <!-- Address Selection (for Delivery) -->
+            <div class="address-section" id="addressSection">
+                <th:block th:if="${addresses != null and !addresses.isEmpty()}">
+                    <select class="address-select" id="addressSelect" name="addressId">
+                        <option value="">Select delivery address</option>
+                        <option th:each="addr : ${addresses}"
+                                th:value="${addr.id}"
+                                th:text="${addr.streetAddress + ', ' + addr.city}">Address</option>
+                    </select>
+                </th:block>
+                <div class="no-address-msg" th:if="${addresses == null or addresses.isEmpty()}">
+                    <i class="fa-solid fa-location-dot"></i>
+                    No addresses saved. <a href="/customer/addresses">Add one</a>
+                </div>
+            </div>
+
+            <!-- Minimum order notice -->
+            <div class="min-order-notice" th:if="${restaurant.minimumOrderValue != null}">
+                <i class="fa-solid fa-info-circle"></i>
+                Minimum order: <span th:text="${#numbers.formatDecimal(restaurant.minimumOrderValue, 1, 2)} + '€'">0.00€</span>
+            </div>
             <div class="cart-total">
                 <span>Sum Price</span>
                 <span id="cartTotal">0.00€</span>
@@ -509,7 +693,11 @@
             <form id="checkoutForm" th:action="@{/customer/checkout}" method="post">
                 <input type="hidden" name="restaurantId" th:value="${restaurant.id}">
                 <input type="hidden" name="cartData" id="cartDataInput">
-                <button type="submit" class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+                <input type="hidden" name="orderType" id="orderTypeInput" value="PICKUP">
+                <input type="hidden" name="addressId" id="addressIdInput" value="">
+                <button type="submit" class="checkout-btn" id="checkoutBtn" disabled
+                        th:disabled="${!restaurant.open}"
+                        th:text="${restaurant.open} ? 'Checkout' : 'Restaurant Closed'">Checkout</button>
             </form>
         </div>
     </div>
@@ -517,8 +705,16 @@
     <!-- Toast Notification -->
     <div class="toast" id="toast">Added to cart!</div>
 
+    <!-- Error Banner at Bottom -->
+    <div class="error-banner" th:if="${error}">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span th:text="${error}">Error message</span>
+    </div>
+
     <script th:inline="javascript">
         const restaurantId = /*[[${restaurant.id}]]*/ 0;
+        const isRestaurantOpen = /*[[${restaurant.open}]]*/ false;
+        const minimumOrderValue = /*[[${restaurant.minimumOrderValue}]]*/ null;
         const CART_KEY = 'streetfoodgo_cart_' + restaurantId;
 
         // Load cart from localStorage
@@ -598,7 +794,8 @@
                 checkoutBtn.disabled = true;
             } else {
                 cartEmpty.style.display = 'none';
-                checkoutBtn.disabled = false;
+                // Only enable if restaurant is open
+                checkoutBtn.disabled = !isRestaurantOpen;
 
                 // Clear existing items (except empty message)
                 cartItems.querySelectorAll('.cart-item').forEach(el => el.remove());
@@ -644,9 +841,49 @@
             }, 2000);
         }
 
+        // Order type selection
+        let selectedOrderType = 'PICKUP';
+
+        function selectOrderType(type) {
+            selectedOrderType = type;
+
+            // Update button states
+            document.querySelectorAll('.order-type-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.type === type) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Show/hide address section
+            const addressSection = document.getElementById('addressSection');
+            if (type === 'DELIVERY') {
+                addressSection.classList.add('visible');
+            } else {
+                addressSection.classList.remove('visible');
+            }
+
+            // Update hidden input
+            document.getElementById('orderTypeInput').value = type;
+        }
+
+        // Update address hidden input when selection changes
+        function updateAddressInput() {
+            const addressSelect = document.getElementById('addressSelect');
+            if (addressSelect) {
+                document.getElementById('addressIdInput').value = addressSelect.value;
+            }
+        }
+
         // Initialize cart UI on page load
         document.addEventListener('DOMContentLoaded', function() {
             updateCartUI();
+
+            // Add event listener for address selection
+            const addressSelect = document.getElementById('addressSelect');
+            if (addressSelect) {
+                addressSelect.addEventListener('change', updateAddressInput);
+            }
         });
     </script>
 </body>

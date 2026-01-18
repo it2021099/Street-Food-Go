@@ -349,6 +349,7 @@
                     </div>
                     <div class="eta-highlight" th:if="${order.estimatedDeliveryTime != null and order.status.name() != 'DELIVERED' and order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED'}">
                         <i class="fa-solid fa-clock"></i>
+                        <span class="info-label">Should arrive by</span>
                         <span class="info-value" th:text="${#temporals.format(order.estimatedDeliveryTime, 'HH:mm')}">12:30</span>
                     </div>
                 </div>

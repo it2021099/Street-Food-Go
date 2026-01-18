@@ -95,11 +95,15 @@
         }
 
         .main-content {
-            padding-top: 70px;
+            padding-top: 90px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding-bottom: 40px;
+        }
+
+        .main-content.no-orders {
             justify-content: center;
         }
 
@@ -199,6 +203,124 @@
             color: white;
             font-size: 18px;
         }
+
+        /* Active Orders Section */
+        .active-orders-section {
+            width: 100%;
+            max-width: 800px;
+            padding: 0 20px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 24px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #ff6b9d;
+        }
+
+        .active-orders-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .active-order-card {
+            background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%);
+            border-radius: 15px;
+            padding: 20px 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-decoration: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .active-order-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .order-info {
+            flex: 1;
+        }
+
+        .order-restaurant {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .order-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .order-meta i {
+            margin-right: 5px;
+        }
+
+        .order-status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background-color: #f39c12; color: white; }
+        .status-accepted { background-color: #3498db; color: white; }
+        .status-preparing { background-color: #9b59b6; color: white; }
+        .status-ready { background-color: #00c4cc; color: white; }
+        .status-out { background-color: #2ecc71; color: white; }
+
+        .order-eta {
+            background-color: #ff6b9d;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 15px;
+        }
+
+        .order-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .view-order-btn {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 15px;
+            transition: background-color 0.3s;
+        }
+
+        .view-order-btn:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
     </style>
 </head>
 <body>
@@ -211,11 +333,59 @@
             <a href="/customer/dashboard" class="logo">StreetFoodGo</a>
         </div>
         <div class="header-right">
+            <a href="/customer/orders" class="nav-link"><i class="fa-solid fa-receipt"></i> My Orders</a>
             <a href="/logout" class="nav-link">Log out</a>
         </div>
     </header>
 
-    <main class="main-content">
+    <main class="main-content" th:classappend="${activeOrders == null or activeOrders.isEmpty()} ? 'no-orders' : ''">
+        <!-- Active Orders Section -->
+        <div class="active-orders-section" th:if="${activeOrders != null and !activeOrders.isEmpty()}">
+            <h2 class="section-title">
+                <i class="fa-solid fa-clock"></i>
+                Your Active Orders
+            </h2>
+            <div class="active-orders-container">
+                <a th:each="order : ${activeOrders}"
+                   th:href="@{/customer/orders/{id}(id=${order.id})}"
+                   class="active-order-card">
+                    <div class="order-info">
+                        <div class="order-restaurant">
+                            <i class="fa-solid fa-store"></i>
+                            <span th:text="${order.restaurant.name}">Restaurant Name</span>
+                        </div>
+                        <div class="order-meta">
+                            <span>
+                                <i class="fa-solid fa-receipt"></i>
+                                Order #<span th:text="${order.id}">123</span>
+                            </span>
+                            <span>
+                                <i class="fa-solid fa-euro-sign"></i>
+                                <span th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)}">0.00</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="order-right">
+                        <span class="order-status-badge"
+                              th:classappend="${order.status.name() == 'PENDING'} ? 'status-pending' :
+                                              (${order.status.name() == 'ACCEPTED'} ? 'status-accepted' :
+                                              (${order.status.name() == 'PREPARING'} ? 'status-preparing' :
+                                              (${order.status.name() == 'READY_FOR_PICKUP'} ? 'status-ready' :
+                                              'status-out')))"
+                              th:text="${order.status.name().replace('_', ' ')}">PENDING</span>
+                        <div class="order-eta" th:if="${order.estimatedDeliveryTime != null}">
+                            <i class="fa-solid fa-clock"></i>
+                            <span>Should arrive by </span>
+                            <span th:text="${#temporals.format(order.estimatedDeliveryTime, 'HH:mm')}">12:30</span>
+                        </div>
+                        <span class="view-order-btn">
+                            View Details <i class="fa-solid fa-arrow-right"></i>
+                        </span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
         <div class="search-container">
             <form class="search-form" action="/customer/dashboard" method="get">
                 <input type="text"
