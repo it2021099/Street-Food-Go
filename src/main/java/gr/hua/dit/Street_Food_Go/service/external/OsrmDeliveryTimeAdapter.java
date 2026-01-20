@@ -85,12 +85,10 @@ public class OsrmDeliveryTimeAdapter implements DeliveryTimeService {
             int durationMinutes = (int) Math.ceil(durationSeconds / 60.0);
             double distanceKm = distanceMeters / 1000.0;
 
-            // Add preparation time (e.g., 15 minutes for food preparation)
-            int totalDeliveryMinutes = durationMinutes + 15;
+            // Return just the route time (prep time is added by the caller)
+            logger.info("Route time calculated: {} minutes, {} km", durationMinutes, distanceKm);
 
-            logger.info("Delivery time calculated: {} minutes, {} km", totalDeliveryMinutes, distanceKm);
-
-            return DeliveryTimeResult.success(totalDeliveryMinutes, distanceKm);
+            return DeliveryTimeResult.success(durationMinutes, distanceKm);
 
         } catch (Exception e) {
             logger.error("Error calling OSRM API: {}", e.getMessage(), e);

@@ -65,6 +65,7 @@ public class CustomerWebController {
                             o.getStatus() != OrderStatus.REJECTED)
                 .collect(java.util.stream.Collectors.toList());
         model.addAttribute("activeOrders", activeOrders);
+        model.addAttribute("userEmail", userDetails.getUser().getEmail());
 
         return "customer/dashboard";
     }
@@ -79,6 +80,7 @@ public class CustomerWebController {
                     // Pass customer's addresses for delivery option
                     List<Address> addresses = addressService.getAddressesByUserId(userDetails.getId());
                     model.addAttribute("addresses", addresses);
+                    model.addAttribute("userEmail", userDetails.getUser().getEmail());
                     return "customer/restaurant-detail";
                 })
                 .orElse("redirect:/customer/dashboard");
@@ -164,8 +166,10 @@ public class CustomerWebController {
     }
 
     @GetMapping("/order-success")
-    public String orderSuccess(@ModelAttribute("orderId") Long orderId, Model model) {
+    public String orderSuccess(@AuthenticationPrincipal CustomUserDetails userDetails,
+                               @ModelAttribute("orderId") Long orderId, Model model) {
         model.addAttribute("orderId", orderId);
+        model.addAttribute("userEmail", userDetails.getUser().getEmail());
         return "customer/order-success";
     }
 
@@ -175,6 +179,7 @@ public class CustomerWebController {
     public String addresses(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         List<Address> addresses = addressService.getAddressesByUserId(userDetails.getId());
         model.addAttribute("addresses", addresses);
+        model.addAttribute("userEmail", userDetails.getUser().getEmail());
         return "customer/addresses";
     }
 
@@ -218,6 +223,7 @@ public class CustomerWebController {
     public String orders(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         List<Order> orders = orderService.getOrdersByCustomerId(userDetails.getId());
         model.addAttribute("orders", orders);
+        model.addAttribute("userEmail", userDetails.getUser().getEmail());
         return "customer/orders";
     }
 
@@ -228,6 +234,7 @@ public class CustomerWebController {
                 .filter(order -> order.getCustomer().getId().equals(userDetails.getId()))
                 .map(order -> {
                     model.addAttribute("order", order);
+                    model.addAttribute("userEmail", userDetails.getUser().getEmail());
                     return "customer/order-detail";
                 })
                 .orElse("redirect:/customer/orders");

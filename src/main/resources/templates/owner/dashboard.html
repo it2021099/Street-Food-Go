@@ -487,8 +487,8 @@
                             <div class="order-actions">
                                 <form th:action="@{/owner/orders/{id}/accept(id=${order.id})}" method="post" style="display:inline-flex; align-items:center;">
                                     <div class="eta-input-group">
-                                        <input type="number" name="etaMinutes" class="eta-input" value="30" min="5" max="180" title="Minutes until ready">
-                                        <span class="eta-label">min</span>
+                                        <input type="number" name="prepMinutes" class="eta-input" value="15" min="5" max="120" title="Preparation time (delivery time added automatically)">
+                                        <span class="eta-label">prep</span>
                                     </div>
                                     <button type="submit" class="action-btn btn-accept" title="Accept">
                                         <i class="fa-solid fa-check"></i>

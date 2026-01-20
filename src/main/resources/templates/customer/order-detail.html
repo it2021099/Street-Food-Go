@@ -94,6 +94,20 @@
             opacity: 0.8;
         }
 
+        /* Profile Dropdown */
+        .profile-dropdown { position: relative; }
+        .profile-btn { background: none; border: none; cursor: pointer; font-family: inherit; }
+        .profile-menu { display: none; position: absolute; top: 100%; right: 0; background: white; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); min-width: 220px; z-index: 1001; margin-top: 10px; overflow: hidden; }
+        .profile-menu.show { display: block; }
+        .profile-info { padding: 15px; background: linear-gradient(180deg, #a8b5d6 0%, #d4b8c8 100%); }
+        .profile-username { color: white; font-weight: 600; font-size: 15px; margin-bottom: 5px; }
+        .profile-email { color: rgba(255,255,255,0.9); font-size: 13px; }
+        .profile-info i { margin-right: 8px; width: 16px; }
+        .profile-links { padding: 10px 0; }
+        .profile-links a { display: block; padding: 10px 15px; color: #333; text-decoration: none; font-size: 14px; transition: background-color 0.2s; }
+        .profile-links a:hover { background-color: #f5f5f5; }
+        .profile-links a i { margin-right: 10px; color: #ff6b9d; width: 16px; }
+
         .main-content {
             padding-top: 90px;
             min-height: 100vh;
@@ -477,10 +491,29 @@
             <a href="/customer/dashboard" class="logo">StreetFoodGo</a>
         </div>
         <div class="header-right">
+            <div class="profile-dropdown">
+                <button class="nav-link profile-btn" onclick="toggleProfileDropdown()">
+                    <i class="fa-solid fa-user"></i> Profile
+                </button>
+                <div class="profile-menu" id="profileMenu">
+                    <div class="profile-info">
+                        <div class="profile-username"><i class="fa-solid fa-user"></i> <span th:text="${#authentication.name}">Username</span></div>
+                        <div class="profile-email"><i class="fa-solid fa-envelope"></i> <span th:text="${userEmail}">email@example.com</span></div>
+                    </div>
+                    <div class="profile-links">
+                        <a href="/customer/addresses"><i class="fa-solid fa-location-dot"></i> My Addresses</a>
+                    </div>
+                </div>
+            </div>
             <a href="/customer/orders" class="nav-link"><i class="fa-solid fa-receipt"></i> My Orders</a>
             <a href="/logout" class="nav-link">Log out</a>
         </div>
     </header>
+
+    <script>
+        function toggleProfileDropdown() { document.getElementById('profileMenu').classList.toggle('show'); }
+        document.addEventListener('click', function(e) { var d = document.querySelector('.profile-dropdown'); if (d && !d.contains(e.target)) document.getElementById('profileMenu').classList.remove('show'); });
+    </script>
 
     <main class="main-content">
         <!-- Alert messages -->
@@ -502,7 +535,16 @@
                         <i class="fa-solid fa-circle-xmark"></i> Cancelled
                     </div>
                 </div>
-                <div th:if="${order.status.name() != 'DELIVERED' and order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED' and order.status.name() != 'REJECTED'}">
+                <!-- PENDING: Show "To be Confirmed" -->
+                <div th:if="${order.status.name() == 'PENDING'}">
+                    <div class="eta-label">Order Status</div>
+                    <div class="eta-pending">
+                        <i class="fa-solid fa-hourglass-half"></i> To be Confirmed
+                    </div>
+                    <div class="eta-countdown" style="margin-top: 10px;">Waiting for restaurant to accept...</div>
+                </div>
+                <!-- Active orders (not PENDING, not completed/cancelled): Show ETA -->
+                <div th:if="${order.status.name() != 'PENDING' and order.status.name() != 'DELIVERED' and order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED' and order.status.name() != 'REJECTED'}">
                     <div class="eta-label">Should arrive by</div>
                     <div th:if="${order.estimatedDeliveryTime != null}">
                         <div class="eta-time" th:text="${#temporals.format(order.estimatedDeliveryTime, 'HH:mm')}">12:30</div>
@@ -511,7 +553,7 @@
                     </div>
                     <div th:if="${order.estimatedDeliveryTime == null}">
                         <div class="eta-pending">
-                            <i class="fa-solid fa-clock"></i> Waiting for restaurant...
+                            <i class="fa-solid fa-clock"></i> Preparing your order...
                         </div>
                     </div>
                 </div>
@@ -631,8 +673,8 @@
         </div>
     </main>
 
-    <!-- Countdown Timer Script -->
-    <script th:if="${order.estimatedDeliveryTime != null and order.status.name() != 'DELIVERED' and order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED' and order.status.name() != 'REJECTED'}" th:inline="javascript">
+    <!-- Countdown Timer Script (only for accepted orders with ETA) -->
+    <script th:if="${order.estimatedDeliveryTime != null and order.status.name() != 'PENDING' and order.status.name() != 'DELIVERED' and order.status.name() != 'COMPLETED' and order.status.name() != 'CANCELLED' and order.status.name() != 'REJECTED'}" th:inline="javascript">
         (function() {
             var etaString = /*[[${#temporals.format(order.estimatedDeliveryTime, "yyyy-MM-dd'T'HH:mm:ss")}]]*/ '2024-01-01T12:00:00';
             var eta = new Date(etaString);

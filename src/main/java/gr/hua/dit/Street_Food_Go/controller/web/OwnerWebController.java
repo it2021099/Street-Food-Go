@@ -5,6 +5,10 @@ import gr.hua.dit.Street_Food_Go.security.CustomUserDetails;
 import gr.hua.dit.Street_Food_Go.service.MenuItemService;
 import gr.hua.dit.Street_Food_Go.service.OrderService;
 import gr.hua.dit.Street_Food_Go.service.RestaurantService;
+import gr.hua.dit.Street_Food_Go.service.external.DeliveryTimeService;
+import gr.hua.dit.Street_Food_Go.service.external.DeliveryTimeResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,13 +26,17 @@ import java.util.stream.Collectors;
 @RequestMapping("/owner")
 public class OwnerWebController {
 
+    private static final Logger logger = LoggerFactory.getLogger(OwnerWebController.class);
+
     private final RestaurantService restaurantService;
     private final MenuItemService menuItemService;
     private final OrderService orderService;
+    private final DeliveryTimeService deliveryTimeService;
 
     public OwnerWebController(final RestaurantService restaurantService,
                                final MenuItemService menuItemService,
-                               final OrderService orderService) {
+                               final OrderService orderService,
+                               final DeliveryTimeService deliveryTimeService) {
         if (restaurantService == null) {
             throw new NullPointerException("restaurantService cannot be null");
         }
@@ -38,9 +46,13 @@ public class OwnerWebController {
         if (orderService == null) {
             throw new NullPointerException("orderService cannot be null");
         }
+        if (deliveryTimeService == null) {
+            throw new NullPointerException("deliveryTimeService cannot be null");
+        }
         this.restaurantService = restaurantService;
         this.menuItemService = menuItemService;
         this.orderService = orderService;
+        this.deliveryTimeService = deliveryTimeService;
     }
 
     @GetMapping("/dashboard")
@@ -363,15 +375,49 @@ public class OwnerWebController {
     @PostMapping("/orders/{id}/accept")
     public String acceptOrder(@AuthenticationPrincipal CustomUserDetails userDetails,
                                @PathVariable Long id,
-                               @RequestParam(required = false, defaultValue = "30") Integer etaMinutes,
+                               @RequestParam(required = false, defaultValue = "15") Integer prepMinutes,
                                RedirectAttributes redirectAttributes) {
         return orderService.getOrderById(id)
                 .filter(order -> order.getRestaurant().getOwner().getId().equals(userDetails.getId()))
                 .filter(order -> order.getStatus() == OrderStatus.PENDING)
                 .map(order -> {
                     orderService.updateOrderStatus(id, OrderStatus.ACCEPTED);
-                    // Set the estimated delivery time
-                    LocalDateTime eta = LocalDateTime.now().plusMinutes(etaMinutes);
+
+                    // Calculate total ETA = preparation time + route time
+                    int totalMinutes = prepMinutes;
+
+                    // For delivery orders, add route time from OSRM
+                    if (order.getOrderType() == OrderType.DELIVERY && order.getDeliveryAddress() != null) {
+                        Restaurant restaurant = order.getRestaurant();
+                        Address deliveryAddress = order.getDeliveryAddress();
+
+                        if (restaurant.getLatitude() != null && restaurant.getLongitude() != null &&
+                            deliveryAddress.getLatitude() != null && deliveryAddress.getLongitude() != null) {
+
+                            DeliveryTimeResult result = deliveryTimeService.calculateDeliveryTime(
+                                    restaurant.getLatitude(), restaurant.getLongitude(),
+                                    deliveryAddress.getLatitude(), deliveryAddress.getLongitude()
+                            );
+
+                            if (result.isSuccess()) {
+                                // OSRM returns route time, we add prep time on top
+                                int routeMinutes = result.getDurationMinutes();
+                                totalMinutes = prepMinutes + routeMinutes;
+                                logger.info("Order {}: prep={}min + route={}min = total={}min",
+                                        id, prepMinutes, routeMinutes, totalMinutes);
+                            } else {
+                                logger.warn("OSRM failed for order {}: {}, using prep time only + 15min default",
+                                        id, result.getErrorMessage());
+                                totalMinutes = prepMinutes + 15; // Default route time
+                            }
+                        } else {
+                            logger.warn("Missing coordinates for order {}, using prep time + 15min default", id);
+                            totalMinutes = prepMinutes + 15; // Default route time
+                        }
+                    }
+                    // For pickup orders, just use preparation time
+
+                    LocalDateTime eta = LocalDateTime.now().plusMinutes(totalMinutes);
                     orderService.setEstimatedDeliveryTime(id, eta);
                     redirectAttributes.addFlashAttribute("success", "Η παραγγελία αποδέχτηκε");
                     return "redirect:/owner/dashboard";

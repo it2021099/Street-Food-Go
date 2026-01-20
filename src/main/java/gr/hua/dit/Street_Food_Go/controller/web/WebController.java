@@ -110,7 +110,6 @@ public class WebController {
     public String registerCustomer(@RequestParam String username,
                                    @RequestParam String email,
                                    @RequestParam String password,
-                                   @RequestParam(required = false) String address,
                                    RedirectAttributes redirectAttributes) {
         if (userService.existsByUsername(username)) {
             redirectAttributes.addFlashAttribute("error", "Username already exists");
@@ -138,7 +137,6 @@ public class WebController {
     public String registerRestaurant(@RequestParam String username,
                                      @RequestParam String email,
                                      @RequestParam String password,
-                                     @RequestParam(required = false) String address,
                                      RedirectAttributes redirectAttributes) {
         if (userService.existsByUsername(username)) {
             redirectAttributes.addFlashAttribute("error", "Username already exists");

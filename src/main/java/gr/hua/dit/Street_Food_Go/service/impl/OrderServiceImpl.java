@@ -3,10 +3,6 @@ package gr.hua.dit.Street_Food_Go.service.impl;
 import gr.hua.dit.Street_Food_Go.model.*;
 import gr.hua.dit.Street_Food_Go.repository.*;
 import gr.hua.dit.Street_Food_Go.service.OrderService;
-import gr.hua.dit.Street_Food_Go.service.external.DeliveryTimeResult;
-import gr.hua.dit.Street_Food_Go.service.external.DeliveryTimeService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,15 +15,12 @@ import java.util.Optional;
 @Transactional
 public class OrderServiceImpl implements OrderService {
 
-    private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
-
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final MenuItemRepository menuItemRepository;
     private final AddressRepository addressRepository;
-    private final DeliveryTimeService deliveryTimeService;
 
     public OrderServiceImpl(
             final OrderRepository orderRepository,
@@ -35,8 +28,7 @@ public class OrderServiceImpl implements OrderService {
             final UserRepository userRepository,
             final RestaurantRepository restaurantRepository,
             final MenuItemRepository menuItemRepository,
-            final AddressRepository addressRepository,
-            final DeliveryTimeService deliveryTimeService) {
+            final AddressRepository addressRepository) {
         if (orderRepository == null) {
             throw new NullPointerException("orderRepository cannot be null");
         }
@@ -55,16 +47,12 @@ public class OrderServiceImpl implements OrderService {
         if (addressRepository == null) {
             throw new NullPointerException("addressRepository cannot be null");
         }
-        if (deliveryTimeService == null) {
-            throw new NullPointerException("deliveryTimeService cannot be null");
-        }
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.userRepository = userRepository;
         this.restaurantRepository = restaurantRepository;
         this.menuItemRepository = menuItemRepository;
         this.addressRepository = addressRepository;
-        this.deliveryTimeService = deliveryTimeService;
     }
 
     @Override
@@ -86,42 +74,10 @@ public class OrderServiceImpl implements OrderService {
             Address deliveryAddress = addressRepository.findById(deliveryAddressId)
                     .orElseThrow(() -> new RuntimeException("Address not found with id: " + deliveryAddressId));
             order.setDeliveryAddress(deliveryAddress);
-
-            // Calculate estimated delivery time using external OSRM service
-            calculateAndSetDeliveryTime(order, restaurant, deliveryAddress);
+            // ETA will be calculated when the restaurant owner accepts the order
         }
 
         return orderRepository.save(order);
-    }
-
-    /**
-     * Calculates the estimated delivery time using the external OSRM routing service.
-     * This demonstrates the consumption of an external (black-box) service via REST client.
-     */
-    private void calculateAndSetDeliveryTime(Order order, Restaurant restaurant, Address deliveryAddress) {
-        try {
-            DeliveryTimeResult result = deliveryTimeService.calculateDeliveryTime(
-                    restaurant.getLatitude(),
-                    restaurant.getLongitude(),
-                    deliveryAddress.getLatitude(),
-                    deliveryAddress.getLongitude()
-            );
-
-            if (result.isSuccess()) {
-                LocalDateTime estimatedDelivery = LocalDateTime.now().plusMinutes(result.getDurationMinutes());
-                order.setEstimatedDeliveryTime(estimatedDelivery);
-                logger.info("Estimated delivery time set to: {} ({} minutes, {} km)",
-                        estimatedDelivery, result.getDurationMinutes(), result.getDistanceKm());
-            } else {
-                logger.warn("Could not calculate delivery time: {}", result.getErrorMessage());
-                // Set a default estimate if external service fails (30 minutes)
-                order.setEstimatedDeliveryTime(LocalDateTime.now().plusMinutes(30));
-            }
-        } catch (Exception e) {
-            logger.error("Error calculating delivery time", e);
-            // Set a default estimate if external service fails
-            order.setEstimatedDeliveryTime(LocalDateTime.now().plusMinutes(30));
-        }
     }
 
     @Override
